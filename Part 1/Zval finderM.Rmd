@@ -1,0 +1,882 @@
+---
+title: "Untitled"
+output: html_document
+date: "2024-04-23"
+---
+
+This code finds the resident equilibrium values for male care at a range of different parameter values
+
+Reproduction
+```{r}
+# Define parameters for env a
+
+K0a <- 50
+d_Em0a <- 0.5
+d_Ef0a <- 0.5
+d_Am0a <- 0.5
+d_Af0a <- 0.5
+j_m0a <- 0.5
+j_f0a <- 0.5
+e_m0a <- 0.5
+m_Em0a <- 0.5
+m_Ef0a <- 0.5
+
+
+# Define parameters for env b
+
+K0b <- 50
+d_Em0b <- 0.5
+d_Ef0b <- 0.5
+d_Am0b <- 0.5
+d_Af0b <- 0.5
+j_m0b <- 0.5
+j_f0b <- 0.5
+e_m0b <- 0.5
+m_Em0b <- 0.5
+m_Ef0b <- 0.5
+
+c_f0 <- 0
+c_m0 <- 0.7
+c_t0 <- c_m0 + c_f0
+a_c0 <- 6
+
+# Create empty data frame to store results
+result_1 <- data.frame(r0a = numeric(), Z1 = numeric())
+result_2 <- data.frame(r0b = numeric(), Z2 = numeric())
+
+# Loop through range of d_Am values
+for (r0a in seq(5, 6, by = 0.1)) {
+  # Calculate other parameters
+  r10a <- r0a * exp(-((1 - d_Em0a) * e_m0a + (1 - d_Ef0a) * (1 - e_m0a)))
+  d_Em10a <- d_Em0a * exp(-a_c0 * c_t0)
+  d_Ef10a <- d_Ef0a * exp(-a_c0 * c_t0)
+  d_Am10a <- 1 - ((1 - d_Am0a) * exp(-c_m0))
+  d_Af10a <- 1 - ((1 - d_Af0a) * exp(-((1 - d_Em0a) * e_m0a + (1 - d_Ef0a) * (1 - e_m0a) + c_f0)))
+  e_sm10a <- e_m0a * (1 - d_Em10a)
+  e_sf10a <- (1 - e_m0a) * (1 - d_Ef10a)
+  a_f10a <- (1 - e_m0a) * (1 - d_Ef10a) * m_Ef0a * j_f0a
+  e_mf10a <- (1 - e_m0a) * (1 - d_Ef10a) * m_Ef0a
+  a_m10a <- e_m0a * (1 - d_Em10a) * m_Em0a * j_m0a
+  e_mm10a <- e_m0a * (1 - d_Em10a) * m_Em0a
+  
+  # Calculate Z
+  Z1 <- K0a * (1 - ((m_Ef0a * e_sf10a + m_Em0a * e_sm10a + d_Ef10a * (1 - e_m0a) + e_m0a * d_Em10a) * (a_m10a * d_Am10a + a_f10a * d_Af10a)) / (a_f10a * r10a * (e_mf10a * j_f0a + e_mm10a * j_m0a)))
+  
+  result_1 <- rbind(result_1, data.frame(r0a = r0a,  Z1 = Z1))
+}
+ 
+
+# Loop through range of d_Am values
+for (r0b in seq(7, 6, by = -0.1)) {
+  # Calculate other parameters
+  r10b <- r0b * exp(-((1 - d_Em0b) * e_m0b + (1 - d_Ef0b) * (1 - e_m0b)))
+  d_Em10b <- d_Em0b * exp(-a_c0 * c_t0)
+  d_Ef10b <- d_Ef0b * exp(-a_c0 * c_t0)
+  d_Am10b <- 1 - ((1 - d_Am0b) * exp(-c_m0))
+  d_Af10b <- 1 - ((1 - d_Af0b) * exp(-((1 - d_Em0b) * e_m0b + (1 - d_Ef0b) * (1 - e_m0b) + c_f0)))
+  e_sm10b <- e_m0b * (1 - d_Em10b)
+  e_sf10b <- (1 - e_m0b) * (1 - d_Ef10b)
+  a_f10b <- (1 - e_m0b) * (1 - d_Ef10b) * m_Ef0b * j_f0b
+  e_mf10b <- (1 - e_m0b) * (1 - d_Ef10b) * m_Ef0b
+  a_m10b <- e_m0b * (1 - d_Em10b) * m_Em0b * j_m0b
+  e_mm10b <- e_m0b * (1 - d_Em10b) * m_Em0b
+  
+  # Calculate Z
+  Z2 <- K0b * (1 - ((m_Ef0b * e_sf10b + m_Em0b * e_sm10b + d_Ef10b * (1 - e_m0b) + e_m0b * d_Em10b) * (a_m10b * d_Am10b + a_f10b * d_Af10b)) / (a_f10b * r10b * (e_mf10b * j_f0b + e_mm10b * j_m0b)))
+  
+  # Add results to data frame
+  result_2 <- rbind(result_2, data.frame(r0b = r0b, Z2 = Z2))
+}
+  
+  result <- cbind(result_1[,1], result_2[,1], result_1[,2], result_2[,2])
+
+# Save data frame to a file
+write.csv(result, file = "r0M.csv", row.names = FALSE)
+
+```
+
+Male Egg Death Rate
+```{r}
+# Define parameters for env a
+r0a <- 6
+K0a <- 50
+d_Am0a <- 0.5
+d_Ef0a <- 0.5
+d_Af0a <- 0.5
+j_m0a <- 0.5
+j_f0a <- 0.5
+e_m0a <- 0.5
+m_Em0a <- 0.5
+m_Ef0a <- 0.5
+
+
+# Define parameters for env b
+r0b <- 6
+K0b <- 50
+d_Am0b <- 0.5
+d_Ef0b <- 0.5
+d_Af0b <- 0.5
+j_m0b <- 0.5
+j_f0b <- 0.5
+e_m0b <- 0.5
+m_Em0b <- 0.5
+m_Ef0b <- 0.5
+
+c_f0 <- 0
+c_m0 <- 0.7
+c_t0 <- c_m0 + c_f0
+a_c0 <- 6
+
+# Create empty data frame to store results
+result_1 <- data.frame(d_Em0a = numeric(), Z1 = numeric())
+result_2 <- data.frame(d_Em0b = numeric(), Z2 = numeric())
+
+# Loop through range of d_Am values
+for (d_Em0a in  seq(0.1, 0.5, by = 0.01)) {
+  # Calculate other parameters
+  r10a <- r0a * exp(-((1 - d_Em0a) * e_m0a + (1 - d_Ef0a) * (1 - e_m0a)))
+  d_Em10a <- d_Em0a * exp(-a_c0 * c_t0)
+  d_Ef10a <- d_Ef0a * exp(-a_c0 * c_t0)
+  d_Am10a <- 1 - ((1 - d_Am0a) * exp(-c_m0))
+  d_Af10a <- 1 - ((1 - d_Af0a) * exp(-((1 - d_Em0a) * e_m0a + (1 - d_Ef0a) * (1 - e_m0a) + c_f0)))
+  e_sm10a <- e_m0a * (1 - d_Em10a)
+  e_sf10a <- (1 - e_m0a) * (1 - d_Ef10a)
+  a_f10a <- (1 - e_m0a) * (1 - d_Ef10a) * m_Ef0a * j_f0a
+  e_mf10a <- (1 - e_m0a) * (1 - d_Ef10a) * m_Ef0a
+  a_m10a <- e_m0a * (1 - d_Em10a) * m_Em0a * j_m0a
+  e_mm10a <- e_m0a * (1 - d_Em10a) * m_Em0a
+  
+  # Calculate Z
+  Z1 <- K0a * (1 - ((m_Ef0a * e_sf10a + m_Em0a * e_sm10a + d_Ef10a * (1 - e_m0a) + e_m0a * d_Em10a) * (a_m10a * d_Am10a + a_f10a * d_Af10a)) / (a_f10a * r10a * (e_mf10a * j_f0a + e_mm10a * j_m0a)))
+  
+  result_1 <- rbind(result_1, data.frame(d_Em0a = d_Em0a,  Z1 = Z1))
+}
+ 
+
+# Loop through range of d_Am values
+for (d_Em0b in seq(0.9, 0.5, by = -0.01)) {
+  # Calculate other parameters
+  r10b <- r0b * exp(-((1 - d_Em0b) * e_m0b + (1 - d_Ef0b) * (1 - e_m0b)))
+  d_Em10b <- d_Em0b * exp(-a_c0 * c_t0)
+  d_Ef10b <- d_Ef0b * exp(-a_c0 * c_t0)
+  d_Am10b <- 1 - ((1 - d_Am0b) * exp(-c_m0))
+  d_Af10b <- 1 - ((1 - d_Af0b) * exp(-((1 - d_Em0b) * e_m0b + (1 - d_Ef0b) * (1 - e_m0b) + c_f0)))
+  e_sm10b <- e_m0b * (1 - d_Em10b)
+  e_sf10b <- (1 - e_m0b) * (1 - d_Ef10b)
+  a_f10b <- (1 - e_m0b) * (1 - d_Ef10b) * m_Ef0b * j_f0b
+  e_mf10b <- (1 - e_m0b) * (1 - d_Ef10b) * m_Ef0b
+  a_m10b <- e_m0b * (1 - d_Em10b) * m_Em0b * j_m0b
+  e_mm10b <- e_m0b * (1 - d_Em10b) * m_Em0b
+  
+  # Calculate Z
+  Z2 <- K0b * (1 - ((m_Ef0b * e_sf10b + m_Em0b * e_sm10b + d_Ef10b * (1 - e_m0b) + e_m0b * d_Em10b) * (a_m10b * d_Am10b + a_f10b * d_Af10b)) / (a_f10b * r10b * (e_mf10b * j_f0b + e_mm10b * j_m0b)))
+  
+  # Add results to data frame
+  result_2 <- rbind(result_2, data.frame(d_Em0b = d_Em0b, Z2 = Z2))
+}
+  
+  result <- cbind(result_1[,1], result_2[,1], result_1[,2], result_2[,2])
+
+# Save data frame to a file
+write.csv(result, file = "dEm1M.csv", row.names = FALSE)
+
+```
+
+Female Egg Death Rate
+```{r}
+# Define parameters for env a
+r0a <- 6
+K0a <- 50
+d_Am0a <- 0.5
+d_Em0a <- 0.5
+d_Af0a <- 0.5
+j_m0a <- 0.5
+j_f0a <- 0.5
+e_m0a <- 0.5
+m_Em0a <- 0.5
+m_Ef0a <- 0.5
+
+
+# Define parameters for env b
+r0b <- 6
+K0b <- 50
+d_Am0b <- 0.5
+d_Em0b <- 0.5
+d_Af0b <- 0.5
+j_m0b <- 0.5
+j_f0b <- 0.5
+e_m0b <- 0.5
+m_Em0b <- 0.5
+m_Ef0b <- 0.5
+
+c_f0 <- 0
+c_m0 <- 0.7
+c_t0 <- c_m0 + c_f0
+a_c0 <- 6
+
+# Create empty data frame to store results
+result_1 <- data.frame(d_Ef0a = numeric(), Z1 = numeric())
+result_2 <- data.frame(d_Ef0b = numeric(), Z2 = numeric())
+
+# Loop through range of d_Am values
+for (d_Ef0a in  seq(0.1, 0.5, by = 0.01)) {
+  # Calculate other parameters
+  r10a <- r0a * exp(-((1 - d_Em0a) * e_m0a + (1 - d_Ef0a) * (1 - e_m0a)))
+  d_Em10a <- d_Em0a * exp(-a_c0 * c_t0)
+  d_Ef10a <- d_Ef0a * exp(-a_c0 * c_t0)
+  d_Am10a <- 1 - ((1 - d_Am0a) * exp(-c_m0))
+  d_Af10a <- 1 - ((1 - d_Af0a) * exp(-((1 - d_Em0a) * e_m0a + (1 - d_Ef0a) * (1 - e_m0a) + c_f0)))
+  e_sm10a <- e_m0a * (1 - d_Em10a)
+  e_sf10a <- (1 - e_m0a) * (1 - d_Ef10a)
+  a_f10a <- (1 - e_m0a) * (1 - d_Ef10a) * m_Ef0a * j_f0a
+  e_mf10a <- (1 - e_m0a) * (1 - d_Ef10a) * m_Ef0a
+  a_m10a <- e_m0a * (1 - d_Em10a) * m_Em0a * j_m0a
+  e_mm10a <- e_m0a * (1 - d_Em10a) * m_Em0a
+  
+  # Calculate Z
+  Z1 <- K0a * (1 - ((m_Ef0a * e_sf10a + m_Em0a * e_sm10a + d_Ef10a * (1 - e_m0a) + e_m0a * d_Em10a) * (a_m10a * d_Am10a + a_f10a * d_Af10a)) / (a_f10a * r10a * (e_mf10a * j_f0a + e_mm10a * j_m0a)))
+  
+  result_1 <- rbind(result_1, data.frame(d_Ef0a = d_Ef0a,  Z1 = Z1))
+}
+ 
+
+# Loop through range of d_Am values
+for (d_Ef0b in seq(0.9, 0.5, by = -0.01)) {
+  # Calculate other parameters
+  r10b <- r0b * exp(-((1 - d_Em0b) * e_m0b + (1 - d_Ef0b) * (1 - e_m0b)))
+  d_Em10b <- d_Em0b * exp(-a_c0 * c_t0)
+  d_Ef10b <- d_Ef0b * exp(-a_c0 * c_t0)
+  d_Am10b <- 1 - ((1 - d_Am0b) * exp(-c_m0))
+  d_Af10b <- 1 - ((1 - d_Af0b) * exp(-((1 - d_Em0b) * e_m0b + (1 - d_Ef0b) * (1 - e_m0b) + c_f0)))
+  e_sm10b <- e_m0b * (1 - d_Em10b)
+  e_sf10b <- (1 - e_m0b) * (1 - d_Ef10b)
+  a_f10b <- (1 - e_m0b) * (1 - d_Ef10b) * m_Ef0b * j_f0b
+  e_mf10b <- (1 - e_m0b) * (1 - d_Ef10b) * m_Ef0b
+  a_m10b <- e_m0b * (1 - d_Em10b) * m_Em0b * j_m0b
+  e_mm10b <- e_m0b * (1 - d_Em10b) * m_Em0b
+  
+  # Calculate Z
+  Z2 <- K0b * (1 - ((m_Ef0b * e_sf10b + m_Em0b * e_sm10b + d_Ef10b * (1 - e_m0b) + e_m0b * d_Em10b) * (a_m10b * d_Am10b + a_f10b * d_Af10b)) / (a_f10b * r10b * (e_mf10b * j_f0b + e_mm10b * j_m0b)))
+  
+  # Add results to data frame
+  result_2 <- rbind(result_2, data.frame(d_Ef0b = d_Ef0b, Z2 = Z2))
+}
+  
+  result <- cbind(result_1[,1], result_2[,1], result_1[,2], result_2[,2])
+
+# Save data frame to a file
+write.csv(result, file = "dEf1M.csv", row.names = FALSE)
+
+```
+
+Male adult death rate
+```{r}
+# Define parameters for env a
+r0a <- 6
+K0a <- 50
+d_Em0a <- 0.5
+d_Ef0a <- 0.5
+d_Af0a <- 0.5
+j_m0a <- 0.5
+j_f0a <- 0.5
+e_m0a <- 0.5
+m_Em0a <- 0.5
+m_Ef0a <- 0.5
+
+
+# Define parameters for env b
+r0b <- 6
+K0b <- 50
+d_Em0b <- 0.5
+d_Ef0b <- 0.5
+d_Af0b <- 0.5
+j_m0b <- 0.5
+j_f0b <- 0.5
+e_m0b <- 0.5
+m_Em0b <- 0.5
+m_Ef0b <- 0.5
+
+c_f0 <- 0
+c_m0 <- 0.7
+c_t0 <- c_m0 + c_f0
+a_c0 <- 6
+
+# Create empty data frame to store results
+result_1 <- data.frame(d_Am0a = numeric(), Z1 = numeric())
+result_2 <- data.frame(d_Am0b = numeric(), Z2 = numeric())
+
+# Loop through range of d_Am values
+for (d_Am0a in  seq(0.1, 0.5, by = 0.01)) {
+  # Calculate other parameters
+  r10a <- r0a * exp(-((1 - d_Em0a) * e_m0a + (1 - d_Ef0a) * (1 - e_m0a)))
+  d_Em10a <- d_Em0a * exp(-a_c0 * c_t0)
+  d_Ef10a <- d_Ef0a * exp(-a_c0 * c_t0)
+  d_Am10a <- 1 - ((1 - d_Am0a) * exp(-c_m0))
+  d_Af10a <- 1 - ((1 - d_Af0a) * exp(-((1 - d_Em0a) * e_m0a + (1 - d_Ef0a) * (1 - e_m0a) + c_f0)))
+  e_sm10a <- e_m0a * (1 - d_Em10a)
+  e_sf10a <- (1 - e_m0a) * (1 - d_Ef10a)
+  a_f10a <- (1 - e_m0a) * (1 - d_Ef10a) * m_Ef0a * j_f0a
+  e_mf10a <- (1 - e_m0a) * (1 - d_Ef10a) * m_Ef0a
+  a_m10a <- e_m0a * (1 - d_Em10a) * m_Em0a * j_m0a
+  e_mm10a <- e_m0a * (1 - d_Em10a) * m_Em0a
+  
+  # Calculate Z
+  Z1 <- K0a * (1 - ((m_Ef0a * e_sf10a + m_Em0a * e_sm10a + d_Ef10a * (1 - e_m0a) + e_m0a * d_Em10a) * (a_m10a * d_Am10a + a_f10a * d_Af10a)) / (a_f10a * r10a * (e_mf10a * j_f0a + e_mm10a * j_m0a)))
+  
+  result_1 <- rbind(result_1, data.frame(d_Am0a = d_Am0a,  Z1 = Z1))
+}
+ 
+
+# Loop through range of d_Am values
+for (d_Am0b in seq(0.9, 0.5, by = -0.01)) {
+  # Calculate other parameters
+  r10b <- r0b * exp(-((1 - d_Em0b) * e_m0b + (1 - d_Ef0b) * (1 - e_m0b)))
+  d_Em10b <- d_Em0b * exp(-a_c0 * c_t0)
+  d_Ef10b <- d_Ef0b * exp(-a_c0 * c_t0)
+  d_Am10b <- 1 - ((1 - d_Am0b) * exp(-c_m0))
+  d_Af10b <- 1 - ((1 - d_Af0b) * exp(-((1 - d_Em0b) * e_m0b + (1 - d_Ef0b) * (1 - e_m0b) + c_f0)))
+  e_sm10b <- e_m0b * (1 - d_Em10b)
+  e_sf10b <- (1 - e_m0b) * (1 - d_Ef10b)
+  a_f10b <- (1 - e_m0b) * (1 - d_Ef10b) * m_Ef0b * j_f0b
+  e_mf10b <- (1 - e_m0b) * (1 - d_Ef10b) * m_Ef0b
+  a_m10b <- e_m0b * (1 - d_Em10b) * m_Em0b * j_m0b
+  e_mm10b <- e_m0b * (1 - d_Em10b) * m_Em0b
+  
+  # Calculate Z
+  Z2 <- K0b * (1 - ((m_Ef0b * e_sf10b + m_Em0b * e_sm10b + d_Ef10b * (1 - e_m0b) + e_m0b * d_Em10b) * (a_m10b * d_Am10b + a_f10b * d_Af10b)) / (a_f10b * r10b * (e_mf10b * j_f0b + e_mm10b * j_m0b)))
+  
+  # Add results to data frame
+  result_2 <- rbind(result_2, data.frame(d_Am0b = d_Am0b, Z2 = Z2))
+}
+  
+  result <- cbind(result_1[,1], result_2[,1], result_1[,2], result_2[,2])
+
+# Save data frame to a file
+write.csv(result, file = "dAm1M.csv", row.names = FALSE)
+
+```
+
+Female adult death rate
+```{r}
+# Define parameters for env a
+r0a <- 6
+K0a <- 50
+d_Em0a <- 0.5
+d_Ef0a <- 0.5
+d_Am0a <- 0.5
+j_m0a <- 0.5
+j_f0a <- 0.5
+e_m0a <- 0.5
+m_Em0a <- 0.5
+m_Ef0a <- 0.5
+
+
+# Define parameters for env b
+r0b <- 6
+K0b <- 50
+d_Em0b <- 0.5
+d_Ef0b <- 0.5
+d_Am0b <- 0.5
+j_m0b <- 0.5
+j_f0b <- 0.5
+e_m0b <- 0.5
+m_Em0b <- 0.5
+m_Ef0b <- 0.5
+
+c_f0 <- 0
+c_m0 <- 0.7
+c_t0 <- c_m0 + c_f0
+a_c0 <- 6
+
+# Create empty data frame to store results
+result_1 <- data.frame(d_Af0a = numeric(), Z1 = numeric())
+result_2 <- data.frame(d_Af0b = numeric(), Z2 = numeric())
+
+# Loop through range of d_Am values
+for (d_Af0a in  seq(0.1, 0.5, by = 0.01)) {
+  # Calculate other parameters
+  r10a <- r0a * exp(-((1 - d_Em0a) * e_m0a + (1 - d_Ef0a) * (1 - e_m0a)))
+  d_Em10a <- d_Em0a * exp(-a_c0 * c_t0)
+  d_Ef10a <- d_Ef0a * exp(-a_c0 * c_t0)
+  d_Am10a <- 1 - ((1 - d_Am0a) * exp(-c_m0))
+  d_Af10a <- 1 - ((1 - d_Af0a) * exp(-((1 - d_Em0a) * e_m0a + (1 - d_Ef0a) * (1 - e_m0a) + c_f0)))
+  e_sm10a <- e_m0a * (1 - d_Em10a)
+  e_sf10a <- (1 - e_m0a) * (1 - d_Ef10a)
+  a_f10a <- (1 - e_m0a) * (1 - d_Ef10a) * m_Ef0a * j_f0a
+  e_mf10a <- (1 - e_m0a) * (1 - d_Ef10a) * m_Ef0a
+  a_m10a <- e_m0a * (1 - d_Em10a) * m_Em0a * j_m0a
+  e_mm10a <- e_m0a * (1 - d_Em10a) * m_Em0a
+  
+  # Calculate Z
+  Z1 <- K0a * (1 - ((m_Ef0a * e_sf10a + m_Em0a * e_sm10a + d_Ef10a * (1 - e_m0a) + e_m0a * d_Em10a) * (a_m10a * d_Am10a + a_f10a * d_Af10a)) / (a_f10a * r10a * (e_mf10a * j_f0a + e_mm10a * j_m0a)))
+  
+  result_1 <- rbind(result_1, data.frame(d_Af0a = d_Af0a,  Z1 = Z1))
+}
+ 
+
+# Loop through range of d_Am values
+for (d_Af0b in seq(0.9, 0.5, by = -0.01)) {
+  # Calculate other parameters
+  r10b <- r0b * exp(-((1 - d_Em0b) * e_m0b + (1 - d_Ef0b) * (1 - e_m0b)))
+  d_Em10b <- d_Em0b * exp(-a_c0 * c_t0)
+  d_Ef10b <- d_Ef0b * exp(-a_c0 * c_t0)
+  d_Am10b <- 1 - ((1 - d_Am0b) * exp(-c_m0))
+  d_Af10b <- 1 - ((1 - d_Af0b) * exp(-((1 - d_Em0b) * e_m0b + (1 - d_Ef0b) * (1 - e_m0b) + c_f0)))
+  e_sm10b <- e_m0b * (1 - d_Em10b)
+  e_sf10b <- (1 - e_m0b) * (1 - d_Ef10b)
+  a_f10b <- (1 - e_m0b) * (1 - d_Ef10b) * m_Ef0b * j_f0b
+  e_mf10b <- (1 - e_m0b) * (1 - d_Ef10b) * m_Ef0b
+  a_m10b <- e_m0b * (1 - d_Em10b) * m_Em0b * j_m0b
+  e_mm10b <- e_m0b * (1 - d_Em10b) * m_Em0b
+  
+  # Calculate Z
+  Z2 <- K0b * (1 - ((m_Ef0b * e_sf10b + m_Em0b * e_sm10b + d_Ef10b * (1 - e_m0b) + e_m0b * d_Em10b) * (a_m10b * d_Am10b + a_f10b * d_Af10b)) / (a_f10b * r10b * (e_mf10b * j_f0b + e_mm10b * j_m0b)))
+  
+  # Add results to data frame
+  result_2 <- rbind(result_2, data.frame(d_Af0b = d_Af0b, Z2 = Z2))
+}
+  
+  result <- cbind(result_1[,1], result_2[,1], result_1[,2], result_2[,2])
+
+# Save data frame to a file
+write.csv(result, file = "dAf1M.csv", row.names = FALSE)
+
+```
+
+Male juvenile survival rate
+```{r}
+# Define parameters for env a
+r0a <- 6
+K0a <- 50
+d_Em0a <- 0.5
+d_Ef0a <- 0.5
+d_Am0a <- 0.5
+d_Af0a <- 0.5
+j_f0a <- 0.5
+e_m0a <- 0.5
+m_Em0a <- 0.5
+m_Ef0a <- 0.5
+
+
+# Define parameters for env b
+r0b <- 6
+K0b <- 50
+d_Em0b <- 0.5
+d_Ef0b <- 0.5
+d_Am0b <- 0.5
+d_Af0b <- 0.5
+j_f0b <- 0.5
+e_m0b <- 0.5
+m_Em0b <- 0.5
+m_Ef0b <- 0.5
+
+c_f0 <- 0
+c_m0 <- 0.7
+c_t0 <- c_m0 + c_f0
+a_c0 <- 6
+
+# Create empty data frame to store results
+result_1 <- data.frame(j_m0a = numeric(), Z1 = numeric())
+result_2 <- data.frame(j_m0b = numeric(), Z2 = numeric())
+
+# Loop through range of d_Am values
+for (j_m0a in  seq(0.1, 0.5, by = 0.01)) {
+  # Calculate other parameters
+  r10a <- r0a * exp(-((1 - d_Em0a) * e_m0a + (1 - d_Ef0a) * (1 - e_m0a)))
+  d_Em10a <- d_Em0a * exp(-a_c0 * c_t0)
+  d_Ef10a <- d_Ef0a * exp(-a_c0 * c_t0)
+  d_Am10a <- 1 - ((1 - d_Am0a) * exp(-c_m0))
+  d_Af10a <- 1 - ((1 - d_Af0a) * exp(-((1 - d_Em0a) * e_m0a + (1 - d_Ef0a) * (1 - e_m0a) + c_f0)))
+  e_sm10a <- e_m0a * (1 - d_Em10a)
+  e_sf10a <- (1 - e_m0a) * (1 - d_Ef10a)
+  a_f10a <- (1 - e_m0a) * (1 - d_Ef10a) * m_Ef0a * j_f0a
+  e_mf10a <- (1 - e_m0a) * (1 - d_Ef10a) * m_Ef0a
+  a_m10a <- e_m0a * (1 - d_Em10a) * m_Em0a * j_m0a
+  e_mm10a <- e_m0a * (1 - d_Em10a) * m_Em0a
+  
+  # Calculate Z
+  Z1 <- K0a * (1 - ((m_Ef0a * e_sf10a + m_Em0a * e_sm10a + d_Ef10a * (1 - e_m0a) + e_m0a * d_Em10a) * (a_m10a * d_Am10a + a_f10a * d_Af10a)) / (a_f10a * r10a * (e_mf10a * j_f0a + e_mm10a * j_m0a)))
+  
+  result_1 <- rbind(result_1, data.frame(j_m0a = j_m0a,  Z1 = Z1))
+}
+ 
+
+# Loop through range of d_Am values
+for (j_m0b in seq(0.9, 0.5, by = -0.01)) {
+  # Calculate other parameters
+  r10b <- r0b * exp(-((1 - d_Em0b) * e_m0b + (1 - d_Ef0b) * (1 - e_m0b)))
+  d_Em10b <- d_Em0b * exp(-a_c0 * c_t0)
+  d_Ef10b <- d_Ef0b * exp(-a_c0 * c_t0)
+  d_Am10b <- 1 - ((1 - d_Am0b) * exp(-c_m0))
+  d_Af10b <- 1 - ((1 - d_Af0b) * exp(-((1 - d_Em0b) * e_m0b + (1 - d_Ef0b) * (1 - e_m0b) + c_f0)))
+  e_sm10b <- e_m0b * (1 - d_Em10b)
+  e_sf10b <- (1 - e_m0b) * (1 - d_Ef10b)
+  a_f10b <- (1 - e_m0b) * (1 - d_Ef10b) * m_Ef0b * j_f0b
+  e_mf10b <- (1 - e_m0b) * (1 - d_Ef10b) * m_Ef0b
+  a_m10b <- e_m0b * (1 - d_Em10b) * m_Em0b * j_m0b
+  e_mm10b <- e_m0b * (1 - d_Em10b) * m_Em0b
+  
+  # Calculate Z
+  Z2 <- K0b * (1 - ((m_Ef0b * e_sf10b + m_Em0b * e_sm10b + d_Ef10b * (1 - e_m0b) + e_m0b * d_Em10b) * (a_m10b * d_Am10b + a_f10b * d_Af10b)) / (a_f10b * r10b * (e_mf10b * j_f0b + e_mm10b * j_m0b)))
+  
+  # Add results to data frame
+  result_2 <- rbind(result_2, data.frame(j_m0b = j_m0b, Z2 = Z2))
+}
+  
+  result <- cbind(result_1[,1], result_2[,1], result_1[,2], result_2[,2])
+
+# Save data frame to a file
+write.csv(result, file = "j_m1M.csv", row.names = FALSE)
+
+```
+
+Female juvenile survival rate
+```{r}
+# Define parameters for env a
+r0a <- 6
+K0a <- 50
+d_Em0a <- 0.5
+d_Ef0a <- 0.5
+d_Am0a <- 0.5
+d_Af0a <- 0.5
+j_m0a <- 0.5
+e_m0a <- 0.5
+m_Em0a <- 0.5
+m_Ef0a <- 0.5
+
+
+# Define parameters for env b
+r0b <- 6
+K0b <- 50
+d_Em0b <- 0.5
+d_Ef0b <- 0.5
+d_Am0b <- 0.5
+d_Af0b <- 0.5
+j_m0b <- 0.5
+e_m0b <- 0.5
+m_Em0b <- 0.5
+m_Ef0b <- 0.5
+
+c_f0 <- 0
+c_m0 <- 0.7
+c_t0 <- c_m0 + c_f0
+a_c0 <- 6
+
+# Create empty data frame to store results
+result_1 <- data.frame(j_f0a = numeric(), Z1 = numeric())
+result_2 <- data.frame(j_f0b = numeric(), Z2 = numeric())
+
+# Loop through range of d_Am values
+for (j_f0a in  seq(0.1, 0.5, by = 0.01)) {
+  # Calculate other parameters
+  r10a <- r0a * exp(-((1 - d_Em0a) * e_m0a + (1 - d_Ef0a) * (1 - e_m0a)))
+  d_Em10a <- d_Em0a * exp(-a_c0 * c_t0)
+  d_Ef10a <- d_Ef0a * exp(-a_c0 * c_t0)
+  d_Am10a <- 1 - ((1 - d_Am0a) * exp(-c_m0))
+  d_Af10a <- 1 - ((1 - d_Af0a) * exp(-((1 - d_Em0a) * e_m0a + (1 - d_Ef0a) * (1 - e_m0a) + c_f0)))
+  e_sm10a <- e_m0a * (1 - d_Em10a)
+  e_sf10a <- (1 - e_m0a) * (1 - d_Ef10a)
+  a_f10a <- (1 - e_m0a) * (1 - d_Ef10a) * m_Ef0a * j_f0a
+  e_mf10a <- (1 - e_m0a) * (1 - d_Ef10a) * m_Ef0a
+  a_m10a <- e_m0a * (1 - d_Em10a) * m_Em0a * j_m0a
+  e_mm10a <- e_m0a * (1 - d_Em10a) * m_Em0a
+  
+  # Calculate Z
+  Z1 <- K0a * (1 - ((m_Ef0a * e_sf10a + m_Em0a * e_sm10a + d_Ef10a * (1 - e_m0a) + e_m0a * d_Em10a) * (a_m10a * d_Am10a + a_f10a * d_Af10a)) / (a_f10a * r10a * (e_mf10a * j_f0a + e_mm10a * j_m0a)))
+  
+  result_1 <- rbind(result_1, data.frame(j_f0a = j_f0a,  Z1 = Z1))
+}
+ 
+
+# Loop through range of d_Am values
+for (j_f0b in seq(0.9, 0.5, by = -0.01)) {
+  # Calculate other parameters
+  r10b <- r0b * exp(-((1 - d_Em0b) * e_m0b + (1 - d_Ef0b) * (1 - e_m0b)))
+  d_Em10b <- d_Em0b * exp(-a_c0 * c_t0)
+  d_Ef10b <- d_Ef0b * exp(-a_c0 * c_t0)
+  d_Am10b <- 1 - ((1 - d_Am0b) * exp(-c_m0))
+  d_Af10b <- 1 - ((1 - d_Af0b) * exp(-((1 - d_Em0b) * e_m0b + (1 - d_Ef0b) * (1 - e_m0b) + c_f0)))
+  e_sm10b <- e_m0b * (1 - d_Em10b)
+  e_sf10b <- (1 - e_m0b) * (1 - d_Ef10b)
+  a_f10b <- (1 - e_m0b) * (1 - d_Ef10b) * m_Ef0b * j_f0b
+  e_mf10b <- (1 - e_m0b) * (1 - d_Ef10b) * m_Ef0b
+  a_m10b <- e_m0b * (1 - d_Em10b) * m_Em0b * j_m0b
+  e_mm10b <- e_m0b * (1 - d_Em10b) * m_Em0b
+  
+  # Calculate Z
+  Z2 <- K0b * (1 - ((m_Ef0b * e_sf10b + m_Em0b * e_sm10b + d_Ef10b * (1 - e_m0b) + e_m0b * d_Em10b) * (a_m10b * d_Am10b + a_f10b * d_Af10b)) / (a_f10b * r10b * (e_mf10b * j_f0b + e_mm10b * j_m0b)))
+  
+  # Add results to data frame
+  result_2 <- rbind(result_2, data.frame(j_f0b = j_f0b, Z2 = Z2))
+}
+  
+  result <- cbind(result_1[,1], result_2[,1], result_1[,2], result_2[,2])
+
+# Save data frame to a file
+write.csv(result, file = "j_f1M.csv", row.names = FALSE)
+
+```
+
+
+male maturation rate
+```{r}
+# Define parameters for env a
+r0a <- 6
+K0a <- 50
+d_Em0a <- 0.5
+d_Ef0a <- 0.5
+d_Am0a <- 0.5
+d_Af0a <- 0.5
+j_m0a <- 0.5
+j_f0a<-0.5
+e_m0a <- 0.5
+m_Ef0a <- 0.5
+
+
+# Define parameters for env b
+r0b <- 6
+K0b <- 50
+d_Em0b <- 0.5
+d_Ef0b <- 0.5
+d_Am0b <- 0.5
+d_Af0b <- 0.5
+j_m0b <- 0.5
+j_f0b <- 0.5
+e_m0b <- 0.5
+m_Ef0b <- 0.5
+
+c_f0 <- 0
+c_m0 <- 0.7
+c_t0 <- c_m0 + c_f0
+a_c0 <- 6
+
+# Create empty data frame to store results
+result_1 <- data.frame(m_Em0a = numeric(), Z1 = numeric())
+result_2 <- data.frame(m_Em0b = numeric(), Z2 = numeric())
+
+# Loop through range of d_Am values
+for (m_Em0a in  seq(0.1, 0.5, by = 0.01)) {
+  # Calculate other parameters
+  r10a <- r0a * exp(-((1 - d_Em0a) * e_m0a + (1 - d_Ef0a) * (1 - e_m0a)))
+  d_Em10a <- d_Em0a * exp(-a_c0 * c_t0)
+  d_Ef10a <- d_Ef0a * exp(-a_c0 * c_t0)
+  d_Am10a <- 1 - ((1 - d_Am0a) * exp(-c_m0))
+  d_Af10a <- 1 - ((1 - d_Af0a) * exp(-((1 - d_Em0a) * e_m0a + (1 - d_Ef0a) * (1 - e_m0a) + c_f0)))
+  e_sm10a <- e_m0a * (1 - d_Em10a)
+  e_sf10a <- (1 - e_m0a) * (1 - d_Ef10a)
+  a_f10a <- (1 - e_m0a) * (1 - d_Ef10a) * m_Ef0a * j_f0a
+  e_mf10a <- (1 - e_m0a) * (1 - d_Ef10a) * m_Ef0a
+  a_m10a <- e_m0a * (1 - d_Em10a) * m_Em0a * j_m0a
+  e_mm10a <- e_m0a * (1 - d_Em10a) * m_Em0a
+  
+  # Calculate Z
+  Z1 <- K0a * (1 - ((m_Ef0a * e_sf10a + m_Em0a * e_sm10a + d_Ef10a * (1 - e_m0a) + e_m0a * d_Em10a) * (a_m10a * d_Am10a + a_f10a * d_Af10a)) / (a_f10a * r10a * (e_mf10a * j_f0a + e_mm10a * j_m0a)))
+  
+  result_1 <- rbind(result_1, data.frame(m_Em0a = m_Em0a,  Z1 = Z1))
+}
+ 
+
+# Loop through range of d_Am values
+for (m_Em0b in seq(0.9, 0.5, by = -0.01)) {
+  # Calculate other parameters
+  r10b <- r0b * exp(-((1 - d_Em0b) * e_m0b + (1 - d_Ef0b) * (1 - e_m0b)))
+  d_Em10b <- d_Em0b * exp(-a_c0 * c_t0)
+  d_Ef10b <- d_Ef0b * exp(-a_c0 * c_t0)
+  d_Am10b <- 1 - ((1 - d_Am0b) * exp(-c_m0))
+  d_Af10b <- 1 - ((1 - d_Af0b) * exp(-((1 - d_Em0b) * e_m0b + (1 - d_Ef0b) * (1 - e_m0b) + c_f0)))
+  e_sm10b <- e_m0b * (1 - d_Em10b)
+  e_sf10b <- (1 - e_m0b) * (1 - d_Ef10b)
+  a_f10b <- (1 - e_m0b) * (1 - d_Ef10b) * m_Ef0b * j_f0b
+  e_mf10b <- (1 - e_m0b) * (1 - d_Ef10b) * m_Ef0b
+  a_m10b <- e_m0b * (1 - d_Em10b) * m_Em0b * j_m0b
+  e_mm10b <- e_m0b * (1 - d_Em10b) * m_Em0b
+  
+  # Calculate Z
+  Z2 <- K0b * (1 - ((m_Ef0b * e_sf10b + m_Em0b * e_sm10b + d_Ef10b * (1 - e_m0b) + e_m0b * d_Em10b) * (a_m10b * d_Am10b + a_f10b * d_Af10b)) / (a_f10b * r10b * (e_mf10b * j_f0b + e_mm10b * j_m0b)))
+  
+  # Add results to data frame
+  result_2 <- rbind(result_2, data.frame(m_Em0b = m_Em0b, Z2 = Z2))
+}
+  
+  result <- cbind(result_1[,1], result_2[,1], result_1[,2], result_2[,2])
+
+# Save data frame to a file
+write.csv(result, file = "m_Em1M.csv", row.names = FALSE)
+
+```
+
+Female maturation rate
+```{r}
+# Define parameters for env a
+r0a <- 6
+K0a <- 50
+d_Em0a <- 0.5
+d_Ef0a <- 0.5
+d_Am0a <- 0.5
+d_Af0a <- 0.5
+j_m0a <- 0.5
+j_f0a<-0.5
+e_m0a <- 0.5
+m_Em0a <- 0.5
+
+
+# Define parameters for env b
+r0b <- 6
+K0b <- 50
+d_Em0b <- 0.5
+d_Ef0b <- 0.5
+d_Am0b <- 0.5
+d_Af0b <- 0.5
+j_m0b <- 0.5
+j_f0b <- 0.5
+e_m0b <- 0.5
+m_Em0b <- 0.5
+
+c_f0 <- 0
+c_m0 <- 0.7
+c_t0 <- c_m0 + c_f0
+a_c0 <- 6
+
+# Create empty data frame to store results
+result_1 <- data.frame(m_Ef0a = numeric(), Z1 = numeric())
+result_2 <- data.frame(m_Ef0b = numeric(), Z2 = numeric())
+
+# Loop through range of d_Am values
+for (m_Ef0a in  seq(0.1, 0.5, by = 0.01)) {
+  # Calculate other parameters
+  r10a <- r0a * exp(-((1 - d_Em0a) * e_m0a + (1 - d_Ef0a) * (1 - e_m0a)))
+  d_Em10a <- d_Em0a * exp(-a_c0 * c_t0)
+  d_Ef10a <- d_Ef0a * exp(-a_c0 * c_t0)
+  d_Am10a <- 1 - ((1 - d_Am0a) * exp(-c_m0))
+  d_Af10a <- 1 - ((1 - d_Af0a) * exp(-((1 - d_Em0a) * e_m0a + (1 - d_Ef0a) * (1 - e_m0a) + c_f0)))
+  e_sm10a <- e_m0a * (1 - d_Em10a)
+  e_sf10a <- (1 - e_m0a) * (1 - d_Ef10a)
+  a_f10a <- (1 - e_m0a) * (1 - d_Ef10a) * m_Ef0a * j_f0a
+  e_mf10a <- (1 - e_m0a) * (1 - d_Ef10a) * m_Ef0a
+  a_m10a <- e_m0a * (1 - d_Em10a) * m_Em0a * j_m0a
+  e_mm10a <- e_m0a * (1 - d_Em10a) * m_Em0a
+  
+  # Calculate Z
+  Z1 <- K0a * (1 - ((m_Ef0a * e_sf10a + m_Em0a * e_sm10a + d_Ef10a * (1 - e_m0a) + e_m0a * d_Em10a) * (a_m10a * d_Am10a + a_f10a * d_Af10a)) / (a_f10a * r10a * (e_mf10a * j_f0a + e_mm10a * j_m0a)))
+  
+  result_1 <- rbind(result_1, data.frame(m_Ef0a = m_Ef0a,  Z1 = Z1))
+}
+ 
+
+# Loop through range of d_Am values
+for (m_Ef0b in seq(0.9, 0.5, by = -0.01)) {
+  # Calculate other parameters
+  r10b <- r0b * exp(-((1 - d_Em0b) * e_m0b + (1 - d_Ef0b) * (1 - e_m0b)))
+  d_Em10b <- d_Em0b * exp(-a_c0 * c_t0)
+  d_Ef10b <- d_Ef0b * exp(-a_c0 * c_t0)
+  d_Am10b <- 1 - ((1 - d_Am0b) * exp(-c_m0))
+  d_Af10b <- 1 - ((1 - d_Af0b) * exp(-((1 - d_Em0b) * e_m0b + (1 - d_Ef0b) * (1 - e_m0b) + c_f0)))
+  e_sm10b <- e_m0b * (1 - d_Em10b)
+  e_sf10b <- (1 - e_m0b) * (1 - d_Ef10b)
+  a_f10b <- (1 - e_m0b) * (1 - d_Ef10b) * m_Ef0b * j_f0b
+  e_mf10b <- (1 - e_m0b) * (1 - d_Ef10b) * m_Ef0b
+  a_m10b <- e_m0b * (1 - d_Em10b) * m_Em0b * j_m0b
+  e_mm10b <- e_m0b * (1 - d_Em10b) * m_Em0b
+  
+  # Calculate Z
+  Z2 <- K0b * (1 - ((m_Ef0b * e_sf10b + m_Em0b * e_sm10b + d_Ef10b * (1 - e_m0b) + e_m0b * d_Em10b) * (a_m10b * d_Am10b + a_f10b * d_Af10b)) / (a_f10b * r10b * (e_mf10b * j_f0b + e_mm10b * j_m0b)))
+  
+  # Add results to data frame
+  result_2 <- rbind(result_2, data.frame(m_Ef0b = m_Ef0b, Z2 = Z2))
+}
+  
+  result <- cbind(result_1[,1], result_2[,1], result_1[,2], result_2[,2])
+
+# Save data frame to a file
+write.csv(result, file = "m_Ef1M.csv", row.names = FALSE)
+
+```
+
+Carrying capacity
+```{r}
+# Define parameters for env a
+r0a <- 6
+
+d_Em0a <- 0.5
+d_Ef0a <- 0.5
+d_Am0a <- 0.5
+d_Af0a <- 0.5
+j_m0a <- 0.5
+j_f0a<-0.5
+e_m0a <- 0.5
+m_Em0a <- 0.5
+m_Ef0a <- 0.5
+
+
+# Define parameters for env b
+r0b <- 6
+
+d_Em0b <- 0.5
+d_Ef0b <- 0.5
+d_Am0b <- 0.5
+d_Af0b <- 0.5
+j_m0b <- 0.5
+j_f0b <- 0.5
+e_m0b <- 0.5
+m_Em0b <- 0.5
+m_Ef0b <- 0.5
+
+c_f0 <- 0
+c_m0 <- 0.7
+c_t0 <- c_m0 + c_f0
+a_c0 <- 6
+
+# Create empty data frame to store results
+result_1 <- data.frame(K0a = numeric(), Z1 = numeric())
+result_2 <- data.frame(K0b = numeric(), Z2 = numeric())
+
+# Loop through range of d_Am values
+for (K0a in seq(20, 50, by = 1)) {
+  # Calculate other parameters
+  r10a <- r0a * exp(-((1 - d_Em0a) * e_m0a + (1 - d_Ef0a) * (1 - e_m0a)))
+  d_Em10a <- d_Em0a * exp(-a_c0 * c_t0)
+  d_Ef10a <- d_Ef0a * exp(-a_c0 * c_t0)
+  d_Am10a <- 1 - ((1 - d_Am0a) * exp(-c_m0))
+  d_Af10a <- 1 - ((1 - d_Af0a) * exp(-((1 - d_Em0a) * e_m0a + (1 - d_Ef0a) * (1 - e_m0a) + c_f0)))
+  e_sm10a <- e_m0a * (1 - d_Em10a)
+  e_sf10a <- (1 - e_m0a) * (1 - d_Ef10a)
+  a_f10a <- (1 - e_m0a) * (1 - d_Ef10a) * m_Ef0a * j_f0a
+  e_mf10a <- (1 - e_m0a) * (1 - d_Ef10a) * m_Ef0a
+  a_m10a <- e_m0a * (1 - d_Em10a) * m_Em0a * j_m0a
+  e_mm10a <- e_m0a * (1 - d_Em10a) * m_Em0a
+  
+  # Calculate Z
+  Z1 <- K0a * (1 - ((m_Ef0a * e_sf10a + m_Em0a * e_sm10a + d_Ef10a * (1 - e_m0a) + e_m0a * d_Em10a) * (a_m10a * d_Am10a + a_f10a * d_Af10a)) / (a_f10a * r10a * (e_mf10a * j_f0a + e_mm10a * j_m0a)))
+  
+  result_1 <- rbind(result_1, data.frame(K0a = K0a,  Z1 = Z1))
+}
+ 
+
+# Loop through range of d_Am values
+for (K0b in seq(80, 50, by = -1)) {
+  # Calculate other parameters
+  r10b <- r0b * exp(-((1 - d_Em0b) * e_m0b + (1 - d_Ef0b) * (1 - e_m0b)))
+  d_Em10b <- d_Em0b * exp(-a_c0 * c_t0)
+  d_Ef10b <- d_Ef0b * exp(-a_c0 * c_t0)
+  d_Am10b <- 1 - ((1 - d_Am0b) * exp(-c_m0))
+  d_Af10b <- 1 - ((1 - d_Af0b) * exp(-((1 - d_Em0b) * e_m0b + (1 - d_Ef0b) * (1 - e_m0b) + c_f0)))
+  e_sm10b <- e_m0b * (1 - d_Em10b)
+  e_sf10b <- (1 - e_m0b) * (1 - d_Ef10b)
+  a_f10b <- (1 - e_m0b) * (1 - d_Ef10b) * m_Ef0b * j_f0b
+  e_mf10b <- (1 - e_m0b) * (1 - d_Ef10b) * m_Ef0b
+  a_m10b <- e_m0b * (1 - d_Em10b) * m_Em0b * j_m0b
+  e_mm10b <- e_m0b * (1 - d_Em10b) * m_Em0b
+  
+  # Calculate Z
+  Z2 <- K0b * (1 - ((m_Ef0b * e_sf10b + m_Em0b * e_sm10b + d_Ef10b * (1 - e_m0b) + e_m0b * d_Em10b) * (a_m10b * d_Am10b + a_f10b * d_Af10b)) / (a_f10b * r10b * (e_mf10b * j_f0b + e_mm10b * j_m0b)))
+  
+  # Add results to data frame
+  result_2 <- rbind(result_2, data.frame(K0b = K0b, Z2 = Z2))
+}
+  
+  result <- cbind(result_1[,1], result_2[,1], result_1[,2], result_2[,2])
+
+# Save data frame to a file
+write.csv(result, file = "KM.csv", row.names = FALSE)
+
+```

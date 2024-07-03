@@ -1,0 +1,2555 @@
+This code finds the equilibrium values for the resident equations given values of alpha and beta < 1 where alpha = 1 - beta. When alpha < 0.5 more reproduction is distributed into envrionment 1 than environment 2, when alpha < 0.5 more reproduction is distributed into environment 2 than environment 1. Populations a and b differ in a single life history parameter. It uses a runge-kutta function to integrates the equations until it reaches an equilibrium state and then takes the final values of adults from each population. It then repeats this process for values of alpha between 0.2 and 0.5. This process is then repeated for different life history variables that differ between populations. In this code the resident care is male only cm = 0.7, cf = 0. To change to female care change values to cm = 0, cf = 0.7. To change to biparental care change cm = 0.35 and cf = 0.35.
+
+Reproduction
+
+```{r}
+# Define the range of d_Am_a values
+alp_values <- seq(0.2, 0.5, by = 0.02)
+
+# Initialize an empty data frame to store final values
+rMalp2_final_values <- data.frame(A1 = numeric(0), A2 = numeric(0))
+
+# Iterate over the range of d_Am_a values
+for (alp_value in alp_values) {
+  # Assign d_Am_a and calculate d_Am_b
+  alp <- alp_value
+  bet <- 1 - alp
+
+  pastvalue <- function(dyno, lag) {
+    tinc=0.01
+    bfl=3000
+
+    maxlag=(bfl-1)*tinc
+    p=0
+
+    if(lag>maxlag){
+      if(p==bfl) midpnt=1 else midpnt=p+1
+      past=hisy[midpnt,dyno]
+    } else {
+      dispnt=floor((lag/tinc)+0.5)
+      disp=(dispnt*tinc-lag)/tinc
+
+      A=0.5*disp*(disp-1)
+      B=(1-disp^2)
+      C=0.5*disp*(disp+1)
+
+      if (dispnt>p) midpnt=p+dispnt else midpnt=bfl+p-dispnt
+
+      if(midpnt==1) leftpnt=bfl else leftpnt=midpnt-1
+      if(midpnt==bfl) rightpnt=1 else rightpnt=midpnt+1
+
+      R=hisy[rightpnt,dyno]
+      L=hisy[leftpnt,dyno]
+      M=hisy[midpnt,dyno]
+
+      past=A*L+B*M+C*R
+    }
+
+    past 
+  }
+
+  nvar = 4
+
+  
+
+  r_a = 5
+  K_a = 50
+  d_Em_a = 0.5
+  d_Ef_a = 0.5
+  d_Af_a = 0.5
+  d_Am_a = 0.5
+  j_m_a = 0.5
+  j_f_a = 0.5
+  t_m_a = 0.1
+  t_f_a = 0.1
+
+  e_m_a = 0.5
+  e_f_a = 1 - e_m_a
+
+  a_c_a = 6
+
+  c_m_a = 0.7
+  c_f_a = 0
+  c_t_a = c_m_a + c_f_a
+
+  r1_a = (r_a*exp(-((1-d_Em_a)*e_m_a + (1-d_Ef_a)*e_f_a)))
+  d_Em1_a = d_Em_a*exp(-a_c_a*((alp*(c_m_a + c_f_a)) + (1 - bet)*(c_m_a + c_f_a)))
+  d_Ef1_a = d_Ef_a*exp(-a_c_a*((alp*(c_m_a + c_f_a)) + (1 - bet)*(c_m_a + c_f_a)))
+  d_Am1_a = 1 - ((1 - d_Am_a)*exp(-c_m_a))
+  d_Af1_a = 1- ((1-d_Af_a)*exp(-((1-d_Em_a)*e_m_a + (1-d_Ef_a)*e_f_a + c_f_a)))
+
+  m_Em_a = 0.5
+  m_Ef_a = 0.5
+
+  e_sm1_a = e_m_a*(1-d_Em1_a)
+  e_sf1_a = e_f_a*(1-d_Ef1_a)
+
+  a_f1_a = e_f_a*(1-d_Ef1_a)*m_Ef_a*j_f_a
+  e_mf1_a = e_f_a*(1-d_Ef1_a)*m_Ef_a
+  a_m1_a = e_m_a*(1-d_Em1_a)*m_Em_a*j_m_a
+  e_mm1_a = e_m_a*(1-d_Em1_a)*m_Em_a
+
+  r_b = 7
+  K_b = 50
+  d_Em_b = 0.5
+  d_Ef_b = 0.5
+  d_Af_b = 0.5
+  d_Am_b = 0.5
+  j_m_b = 0.5
+  j_f_b = 0.5
+  t_m_b = 0.1
+  t_f_b = 0.1
+
+  e_m_b = 0.5
+  e_f_b = 1 - e_m_b
+
+  a_c_b = 6
+
+  c_m_b = 0.7
+  c_f_b = 0
+  c_t_b = c_m_b + c_f_b
+
+  r1_b = (r_b*exp(-((1-d_Em_b)*e_m_b + (1-d_Ef_b)*e_f_b)))
+  d_Em1_b = d_Em_b*exp(-a_c_b*(((1-alp)*(c_m_b + c_f_b)) + bet*(c_m_b + c_f_b)))
+  d_Ef1_b = d_Ef_b*exp(-a_c_b*(((1-alp)*(c_m_b + c_f_b)) + bet*(c_m_b + c_f_b)))
+  d_Am1_b = 1 - ((1 - d_Am_b)*exp(-c_m_b))
+  d_Af1_b = 1- ((1-d_Af_b)*exp(-((1-d_Em_b)*e_m_b + (1-d_Ef_b)*e_f_b + c_f_b)))
+
+  m_Em_b = 0.5
+  m_Ef_b = 0.5
+
+  e_sm1_b = e_m_b*(1-d_Em1_b)
+  e_sf1_b = e_f_b*(1-d_Ef1_b)
+
+  a_f1_b = e_f_b*(1-d_Ef1_b)*m_Ef_b*j_f_b
+  e_mf1_b = e_f_b*(1-d_Ef1_b)*m_Ef_b
+  a_m1_b = e_m_b*(1-d_Em1_b)*m_Em_b*j_m_b
+  e_mm1_b = e_m_b*(1-d_Em1_b)*m_Em_b
+
+  y=array(dim=(nvar))
+
+  derivs <- function(x, y) {
+    yx[1] = r1_a*(alp*y[2]*a_f1_a + (1-bet)*y[4]*a_f1_a)*(1-((alp*y[2] + (1-bet)*y[4])/K_a))- y[1]*(d_Em1_a*e_m_a + d_Ef1_a*e_f_a + m_Em_a*e_sm1_a + m_Ef_a*e_sf1_a)
+    yx[2] = j_m_a*e_mm1_a*pastvalue(1,t_m_a) + j_f_a*e_mf1_a*pastvalue(1,t_f_a) - y[2]*(d_Am1_a*a_m1_a + d_Af1_a*a_f1_a)
+
+    yx[3] = r1_b*((1-alp)*y[2]*a_f1_b + bet*y[4]*a_f1_b)*(1-(((1-alp)*y[2] + bet*y[4])/K_b))- y[3]*(d_Em1_b*e_m_b + d_Ef1_b*e_f_b + m_Em_b*e_sm1_b + m_Ef_b*e_sf1_b)
+    yx[4] = j_m_b*e_mm1_b*pastvalue(3,t_m_b) + j_f_b*e_mf1_b*pastvalue(3,t_f_b) - y[4]*(d_Am1_b*a_m1_b + d_Af1_b*a_f1_b)
+
+    yx
+  }
+
+  #set the initial conditions 
+  y[1]=1
+  y[2]=1
+  y[3]=1
+  y[4]=1
+
+  #set the number of iterations (obs), integration step (h), buffer length (buflen) and start time (v)
+
+  obs=400000
+  buflen=3000
+  v=0.0
+  h=0.01
+
+  #arrays for the RK4 integrator (see below)
+
+  yt=array(1:nvar)
+  dyt=array(1:nvar)
+  dym=array(1:nvar)
+  yout=array(1:nvar)
+  yx=array(1:nvar)
+  eqn=array(1:nvar)
+
+  #these next two lines set up the history variables - it is necessary to carefully define what this history should be and ensure the state variable make sense
+
+  hisy=array(0,dim=c(buflen,nvar))
+  tmp=array(0,dim=c(buflen,nvar))
+  
+  #4th order runge-kutta function
+
+  rk4 <- function(dydx, y, t, n) {
+    for(jj in	1:n)
+      yt[jj]=y[jj]+dydx[jj]*h/2
+    dyt=derivs(t+h/2,yt)
+    for(jj in 1:n)	
+      yt[jj]=y[jj]+h/2*dyt[jj]
+    dym=derivs(t+h/2,yt)
+    for(jj in 1:n)
+      yt[jj]=y[jj]+h*dym[jj]
+    dym=dyt+dym
+    dyt=derivs(t+h,yt)
+    for(jj in 1:n)
+      yout[jj]=y[jj]+(h/6)*(dydx[jj]+dyt[jj]+2*dym[jj])
+    yout
+  }
+
+  # Define output arrays
+  t1 <- array(1:obs)
+  aM1 <- array(dim = c(obs, nvar))
+
+  # Initial state
+  y[1] <- 1
+  y[2] <- 1
+  y[3] <- 1
+  y[4] <- 1
+
+  # Initial convergence criterion threshold
+  convergence_threshold <- 1e-5
+
+  # Initialize previous state
+  previous_state <- y
+  final_state <- NULL
+
+  # Iterate the model
+  for (i in 1:obs) {
+    eqn <- derivs(v, y)
+    y <- rk4(eqn, y, v, nvar)
+
+    # Calculate the difference between the current state and the previous state
+    difference <- sum(abs(y - previous_state))
+
+    # Check if the system has reached equilibrium (the difference is below the threshold)
+    if (difference < convergence_threshold) {
+      # If the system has reached equilibrium, break out of the loop
+      final_state <- y
+      break
+    }
+
+    # Update the previous state
+    previous_state <- y
+
+    # Update the history buffer
+  for (ii in 1:buflen) {
+    for (jj in 1:nvar) {
+      tmp[ii, jj] <- hisy[ii, jj]
+    }
+  }
+
+  for (ii in 2:buflen) {
+    for (jj in 1:nvar) {
+      hisy[ii, jj] <- tmp[ii - 1, jj]
+    }
+  }
+
+  for (jj in 1:nvar) hisy[1, jj] <- y[jj]
+
+    v <- v + h
+    aM1[i, ] <- y
+    t1[i] <- v
+  }
+
+  if (!is.null(final_state)) {
+    # Create a data frame with the final values
+    final_values_temp <- data.frame(alp = alp, A1 = final_state[2], A2 = final_state[4])
+
+    # Append the final values to the final_values data frame
+    rMalp2_final_values <- rbind(rMalp2_final_values, final_values_temp)
+  }
+}
+
+# Output the final values
+rMalp2_final_values
+
+# Save the final_values data frame as a CSV file
+file_path <- "/Users/tobythompson/Desktop/final_values/rMalp2_final_values.csv"
+write.csv(rMalp2_final_values, file = file_path, row.names = FALSE)
+
+```
+
+Male Egg Death Rate
+
+```{r}
+# Define the range of d_Am_a values
+alp_values <- seq(0.2, 0.5, by = 0.02)
+
+# Initialize an empty data frame to store final values
+d_EmMalp2_final_values <- data.frame(A1 = numeric(0), A2 = numeric(0))
+
+# Iterate over the range of d_Am_a values
+for (alp_value in alp_values) {
+  # Assign d_Am_a and calculate d_Am_b
+  alp <- alp_value
+  bet <- 1 - alp
+
+  pastvalue <- function(dyno, lag) {
+    tinc=0.01
+    bfl=3000
+
+    maxlag=(bfl-1)*tinc
+    p=0
+
+    if(lag>maxlag){
+      if(p==bfl) midpnt=1 else midpnt=p+1
+      past=hisy[midpnt,dyno]
+    } else {
+      dispnt=floor((lag/tinc)+0.5)
+      disp=(dispnt*tinc-lag)/tinc
+
+      A=0.5*disp*(disp-1)
+      B=(1-disp^2)
+      C=0.5*disp*(disp+1)
+
+      if (dispnt>p) midpnt=p+dispnt else midpnt=bfl+p-dispnt
+
+      if(midpnt==1) leftpnt=bfl else leftpnt=midpnt-1
+      if(midpnt==bfl) rightpnt=1 else rightpnt=midpnt+1
+
+      R=hisy[rightpnt,dyno]
+      L=hisy[leftpnt,dyno]
+      M=hisy[midpnt,dyno]
+
+      past=A*L+B*M+C*R
+    }
+
+    past 
+  }
+
+  nvar = 4
+
+  
+
+  r_a = 6
+  K_a = 50
+d_Em_a = 0.2
+  d_Ef_a = 0.5
+  d_Af_a = 0.5
+  d_Am_a = 0.5
+  j_m_a = 0.5
+  j_f_a = 0.5
+  t_m_a = 0.1
+  t_f_a = 0.1
+
+  e_m_a = 0.5
+  e_f_a = 1 - e_m_a
+
+  a_c_a = 6
+
+  c_m_a = 0.7
+  c_f_a = 0
+  c_t_a = c_m_a + c_f_a
+
+  r1_a = (r_a*exp(-((1-d_Em_a)*e_m_a + (1-d_Ef_a)*e_f_a)))
+  d_Em1_a = d_Em_a*exp(-a_c_a*((alp*(c_m_a + c_f_a)) + (1 - bet)*(c_m_a + c_f_a)))
+  d_Ef1_a = d_Ef_a*exp(-a_c_a*((alp*(c_m_a + c_f_a)) + (1 - bet)*(c_m_a + c_f_a)))
+  d_Am1_a = 1 - ((1 - d_Am_a)*exp(-c_m_a))
+  d_Af1_a = 1- ((1-d_Af_a)*exp(-((1-d_Em_a)*e_m_a + (1-d_Ef_a)*e_f_a + c_f_a)))
+
+  m_Em_a = 0.5
+  m_Ef_a = 0.5
+
+  e_sm1_a = e_m_a*(1-d_Em1_a)
+  e_sf1_a = e_f_a*(1-d_Ef1_a)
+
+  a_f1_a = e_f_a*(1-d_Ef1_a)*m_Ef_a*j_f_a
+  e_mf1_a = e_f_a*(1-d_Ef1_a)*m_Ef_a
+  a_m1_a = e_m_a*(1-d_Em1_a)*m_Em_a*j_m_a
+  e_mm1_a = e_m_a*(1-d_Em1_a)*m_Em_a
+
+  r_b = 6
+  K_b = 50
+d_Em_b = 0.8
+  d_Ef_b = 0.5
+  d_Af_b = 0.5
+  d_Am_b = 0.5
+  j_m_b = 0.5
+  j_f_b = 0.5
+  t_m_b = 0.1
+  t_f_b = 0.1
+
+  e_m_b = 0.5
+  e_f_b = 1 - e_m_b
+
+  a_c_b = 6
+
+  c_m_b = 0.7
+  c_f_b = 0
+  c_t_b = c_m_b + c_f_b
+
+  r1_b = (r_b*exp(-((1-d_Em_b)*e_m_b + (1-d_Ef_b)*e_f_b)))
+  d_Em1_b = d_Em_b*exp(-a_c_b*(((1-alp)*(c_m_b + c_f_b)) + bet*(c_m_b + c_f_b)))
+  d_Ef1_b = d_Ef_b*exp(-a_c_b*(((1-alp)*(c_m_b + c_f_b)) + bet*(c_m_b + c_f_b)))
+  d_Am1_b = 1 - ((1 - d_Am_b)*exp(-c_m_b))
+  d_Af1_b = 1- ((1-d_Af_b)*exp(-((1-d_Em_b)*e_m_b + (1-d_Ef_b)*e_f_b + c_f_b)))
+
+  m_Em_b = 0.5
+  m_Ef_b = 0.5
+
+  e_sm1_b = e_m_b*(1-d_Em1_b)
+  e_sf1_b = e_f_b*(1-d_Ef1_b)
+
+  a_f1_b = e_f_b*(1-d_Ef1_b)*m_Ef_b*j_f_b
+  e_mf1_b = e_f_b*(1-d_Ef1_b)*m_Ef_b
+  a_m1_b = e_m_b*(1-d_Em1_b)*m_Em_b*j_m_b
+  e_mm1_b = e_m_b*(1-d_Em1_b)*m_Em_b
+
+  y=array(dim=(nvar))
+
+  derivs <- function(x, y) {
+    yx[1] = r1_a*(alp*y[2]*a_f1_a + (1-bet)*y[4]*a_f1_a)*(1-((alp*y[2] + (1-bet)*y[4])/K_a))- y[1]*(d_Em1_a*e_m_a + d_Ef1_a*e_f_a + m_Em_a*e_sm1_a + m_Ef_a*e_sf1_a)
+    yx[2] = j_m_a*e_mm1_a*pastvalue(1,t_m_a) + j_f_a*e_mf1_a*pastvalue(1,t_f_a) - y[2]*(d_Am1_a*a_m1_a + d_Af1_a*a_f1_a)
+
+    yx[3] = r1_b*((1-alp)*y[2]*a_f1_b + bet*y[4]*a_f1_b)*(1-(((1-alp)*y[2] + bet*y[4])/K_b))- y[3]*(d_Em1_b*e_m_b + d_Ef1_b*e_f_b + m_Em_b*e_sm1_b + m_Ef_b*e_sf1_b)
+    yx[4] = j_m_b*e_mm1_b*pastvalue(3,t_m_b) + j_f_b*e_mf1_b*pastvalue(3,t_f_b) - y[4]*(d_Am1_b*a_m1_b + d_Af1_b*a_f1_b)
+
+    yx
+  }
+
+  #set the initial conditions 
+  y[1]=1
+  y[2]=1
+  y[3]=1
+  y[4]=1
+
+  #set the number of iterations (obs), integration step (h), buffer length (buflen) and start time (v)
+
+  obs=400000
+  buflen=3000
+  v=0.0
+  h=0.01
+
+  #arrays for the RK4 integrator (see below)
+
+  yt=array(1:nvar)
+  dyt=array(1:nvar)
+  dym=array(1:nvar)
+  yout=array(1:nvar)
+  yx=array(1:nvar)
+  eqn=array(1:nvar)
+
+  #these next two lines set up the history variables - it is necessary to carefully define what this history should be and ensure the state variable make sense
+
+  hisy=array(0,dim=c(buflen,nvar))
+  tmp=array(0,dim=c(buflen,nvar))
+  
+  #4th order runge-kutta function
+
+  rk4 <- function(dydx, y, t, n) {
+    for(jj in	1:n)
+      yt[jj]=y[jj]+dydx[jj]*h/2
+    dyt=derivs(t+h/2,yt)
+    for(jj in 1:n)	
+      yt[jj]=y[jj]+h/2*dyt[jj]
+    dym=derivs(t+h/2,yt)
+    for(jj in 1:n)
+      yt[jj]=y[jj]+h*dym[jj]
+    dym=dyt+dym
+    dyt=derivs(t+h,yt)
+    for(jj in 1:n)
+      yout[jj]=y[jj]+(h/6)*(dydx[jj]+dyt[jj]+2*dym[jj])
+    yout
+  }
+
+  # Define output arrays
+  t1 <- array(1:obs)
+  aM1 <- array(dim = c(obs, nvar))
+
+  # Initial state
+  y[1] <- 1
+  y[2] <- 1
+  y[3] <- 1
+  y[4] <- 1
+
+  # Initial convergence criterion threshold
+  convergence_threshold <- 1e-5
+
+  # Initialize previous state
+  previous_state <- y
+  final_state <- NULL
+
+  # Iterate the model
+  for (i in 1:obs) {
+    eqn <- derivs(v, y)
+    y <- rk4(eqn, y, v, nvar)
+
+    # Calculate the difference between the current state and the previous state
+    difference <- sum(abs(y - previous_state))
+
+    # Check if the system has reached equilibrium (the difference is below the threshold)
+    if (difference < convergence_threshold) {
+      # If the system has reached equilibrium, break out of the loop
+      final_state <- y
+      break
+    }
+
+    # Update the previous state
+    previous_state <- y
+
+    # Update the history buffer
+  for (ii in 1:buflen) {
+    for (jj in 1:nvar) {
+      tmp[ii, jj] <- hisy[ii, jj]
+    }
+  }
+
+  for (ii in 2:buflen) {
+    for (jj in 1:nvar) {
+      hisy[ii, jj] <- tmp[ii - 1, jj]
+    }
+  }
+
+  for (jj in 1:nvar) hisy[1, jj] <- y[jj]
+
+    v <- v + h
+    aM1[i, ] <- y
+    t1[i] <- v
+  }
+
+  if (!is.null(final_state)) {
+    # Create a data frame with the final values
+    final_values_temp <- data.frame(alp = alp, A1 = final_state[2], A2 = final_state[4])
+
+    # Append the final values to the final_values data frame
+    d_EmMalp2_final_values <- rbind(d_EmMalp2_final_values, final_values_temp)
+  }
+}
+
+# Output the final values
+d_EmMalp2_final_values
+
+# Save the final_values data frame as a CSV file
+file_path <- "/Users/tobythompson/Desktop/final_values/d_EmMalp2_final_values.csv"
+write.csv(d_EmMalp2_final_values, file = file_path, row.names = FALSE)
+
+```
+
+Female Egg Death Rate
+```{r}
+# Define the range of d_Am_a values
+alp_values <- seq(0.2, 0.5, by = 0.02)
+
+# Initialize an empty data frame to store final values
+d_EfMalp2_final_values <- data.frame(A1 = numeric(0), A2 = numeric(0))
+
+# Iterate over the range of d_Am_a values
+for (alp_value in alp_values) {
+  # Assign d_Am_a and calculate d_Am_b
+  alp <- alp_value
+  bet <- 1 - alp
+
+  pastvalue <- function(dyno, lag) {
+    tinc=0.01
+    bfl=3000
+
+    maxlag=(bfl-1)*tinc
+    p=0
+
+    if(lag>maxlag){
+      if(p==bfl) midpnt=1 else midpnt=p+1
+      past=hisy[midpnt,dyno]
+    } else {
+      dispnt=floor((lag/tinc)+0.5)
+      disp=(dispnt*tinc-lag)/tinc
+
+      A=0.5*disp*(disp-1)
+      B=(1-disp^2)
+      C=0.5*disp*(disp+1)
+
+      if (dispnt>p) midpnt=p+dispnt else midpnt=bfl+p-dispnt
+
+      if(midpnt==1) leftpnt=bfl else leftpnt=midpnt-1
+      if(midpnt==bfl) rightpnt=1 else rightpnt=midpnt+1
+
+      R=hisy[rightpnt,dyno]
+      L=hisy[leftpnt,dyno]
+      M=hisy[midpnt,dyno]
+
+      past=A*L+B*M+C*R
+    }
+
+    past 
+  }
+
+  nvar = 4
+
+
+
+  r_a = 6
+  K_a = 50
+d_Ef_a = 0.2
+  d_Em_a = 0.5
+  d_Af_a = 0.5
+  d_Am_a = 0.5
+  j_m_a = 0.5
+  j_f_a = 0.5
+  t_m_a = 0.1
+  t_f_a = 0.1
+
+  e_m_a = 0.5
+  e_f_a = 1 - e_m_a
+
+  a_c_a = 6
+
+  c_m_a = 0.7
+  c_f_a = 0
+  c_t_a = c_m_a + c_f_a
+
+  r1_a = (r_a*exp(-((1-d_Em_a)*e_m_a + (1-d_Ef_a)*e_f_a)))
+  d_Em1_a = d_Em_a*exp(-a_c_a*((alp*(c_m_a + c_f_a)) + (1 - bet)*(c_m_a + c_f_a)))
+  d_Ef1_a = d_Ef_a*exp(-a_c_a*((alp*(c_m_a + c_f_a)) + (1 - bet)*(c_m_a + c_f_a)))
+  d_Am1_a = 1 - ((1 - d_Am_a)*exp(-c_m_a))
+  d_Af1_a = 1- ((1-d_Af_a)*exp(-((1-d_Em_a)*e_m_a + (1-d_Ef_a)*e_f_a + c_f_a)))
+
+  m_Em_a = 0.5
+  m_Ef_a = 0.5
+
+  e_sm1_a = e_m_a*(1-d_Em1_a)
+  e_sf1_a = e_f_a*(1-d_Ef1_a)
+
+  a_f1_a = e_f_a*(1-d_Ef1_a)*m_Ef_a*j_f_a
+  e_mf1_a = e_f_a*(1-d_Ef1_a)*m_Ef_a
+  a_m1_a = e_m_a*(1-d_Em1_a)*m_Em_a*j_m_a
+  e_mm1_a = e_m_a*(1-d_Em1_a)*m_Em_a
+
+  r_b = 6
+  K_b = 50
+d_Ef_b = 0.8
+  d_Em_b = 0.5
+  d_Af_b = 0.5
+  d_Am_b = 0.5
+  j_m_b = 0.5
+  j_f_b = 0.5
+  t_m_b = 0.1
+  t_f_b = 0.1
+
+  e_m_b = 0.5
+  e_f_b = 1 - e_m_b
+
+  a_c_b = 6
+
+  c_m_b = 0.7
+  c_f_b = 0
+  c_t_b = c_m_b + c_f_b
+
+  r1_b = (r_b*exp(-((1-d_Em_b)*e_m_b + (1-d_Ef_b)*e_f_b)))
+  d_Em1_b = d_Em_b*exp(-a_c_b*(((1-alp)*(c_m_b + c_f_b)) + bet*(c_m_b + c_f_b)))
+  d_Ef1_b = d_Ef_b*exp(-a_c_b*(((1-alp)*(c_m_b + c_f_b)) + bet*(c_m_b + c_f_b)))
+  d_Am1_b = 1 - ((1 - d_Am_b)*exp(-c_m_b))
+  d_Af1_b = 1- ((1-d_Af_b)*exp(-((1-d_Em_b)*e_m_b + (1-d_Ef_b)*e_f_b + c_f_b)))
+
+  m_Em_b = 0.5
+  m_Ef_b = 0.5
+
+  e_sm1_b = e_m_b*(1-d_Em1_b)
+  e_sf1_b = e_f_b*(1-d_Ef1_b)
+
+  a_f1_b = e_f_b*(1-d_Ef1_b)*m_Ef_b*j_f_b
+  e_mf1_b = e_f_b*(1-d_Ef1_b)*m_Ef_b
+  a_m1_b = e_m_b*(1-d_Em1_b)*m_Em_b*j_m_b
+  e_mm1_b = e_m_b*(1-d_Em1_b)*m_Em_b
+
+  y=array(dim=(nvar))
+
+  derivs <- function(x, y) {
+    yx[1] = r1_a*(alp*y[2]*a_f1_a + (1-bet)*y[4]*a_f1_a)*(1-((alp*y[2] + (1-bet)*y[4])/K_a))- y[1]*(d_Em1_a*e_m_a + d_Ef1_a*e_f_a + m_Em_a*e_sm1_a + m_Ef_a*e_sf1_a)
+    yx[2] = j_m_a*e_mm1_a*pastvalue(1,t_m_a) + j_f_a*e_mf1_a*pastvalue(1,t_f_a) - y[2]*(d_Am1_a*a_m1_a + d_Af1_a*a_f1_a)
+
+    yx[3] = r1_b*((1-alp)*y[2]*a_f1_b + bet*y[4]*a_f1_b)*(1-(((1-alp)*y[2] + bet*y[4])/K_b))- y[3]*(d_Em1_b*e_m_b + d_Ef1_b*e_f_b + m_Em_b*e_sm1_b + m_Ef_b*e_sf1_b)
+    yx[4] = j_m_b*e_mm1_b*pastvalue(3,t_m_b) + j_f_b*e_mf1_b*pastvalue(3,t_f_b) - y[4]*(d_Am1_b*a_m1_b + d_Af1_b*a_f1_b)
+
+    yx
+  }
+
+  #set the initial conditions 
+  y[1]=1
+  y[2]=1
+  y[3]=1
+  y[4]=1
+
+  #set the number of iterations (obs), integration step (h), buffer length (buflen) and start time (v)
+
+  obs=400000
+  buflen=3000
+  v=0.0
+  h=0.01
+
+  #arrays for the RK4 integrator (see below)
+
+  yt=array(1:nvar)
+  dyt=array(1:nvar)
+  dym=array(1:nvar)
+  yout=array(1:nvar)
+  yx=array(1:nvar)
+  eqn=array(1:nvar)
+
+  #these next two lines set up the history variables - it is necessary to carefully define what this history should be and ensure the state variable make sense
+
+  hisy=array(0,dim=c(buflen,nvar))
+  tmp=array(0,dim=c(buflen,nvar))
+  
+  #4th order runge-kutta function
+
+  rk4 <- function(dydx, y, t, n) {
+    for(jj in	1:n)
+      yt[jj]=y[jj]+dydx[jj]*h/2
+    dyt=derivs(t+h/2,yt)
+    for(jj in 1:n)	
+      yt[jj]=y[jj]+h/2*dyt[jj]
+    dym=derivs(t+h/2,yt)
+    for(jj in 1:n)
+      yt[jj]=y[jj]+h*dym[jj]
+    dym=dyt+dym
+    dyt=derivs(t+h,yt)
+    for(jj in 1:n)
+      yout[jj]=y[jj]+(h/6)*(dydx[jj]+dyt[jj]+2*dym[jj])
+    yout
+  }
+
+  # Define output arrays
+  t1 <- array(1:obs)
+  aM1 <- array(dim = c(obs, nvar))
+
+  # Initial state
+  y[1] <- 1
+  y[2] <- 1
+  y[3] <- 1
+  y[4] <- 1
+
+  # Initial convergence criterion threshold
+  convergence_threshold <- 1e-5
+
+  # Initialize previous state
+  previous_state <- y
+  final_state <- NULL
+
+  # Iterate the model
+  for (i in 1:obs) {
+    eqn <- derivs(v, y)
+    y <- rk4(eqn, y, v, nvar)
+
+    # Calculate the difference between the current state and the previous state
+    difference <- sum(abs(y - previous_state))
+
+    # Check if the system has reached equilibrium (the difference is below the threshold)
+    if (difference < convergence_threshold) {
+      # If the system has reached equilibrium, break out of the loop
+      final_state <- y
+      break
+    }
+
+    # Update the previous state
+    previous_state <- y
+
+    # Update the history buffer
+  for (ii in 1:buflen) {
+    for (jj in 1:nvar) {
+      tmp[ii, jj] <- hisy[ii, jj]
+    }
+  }
+
+  for (ii in 2:buflen) {
+    for (jj in 1:nvar) {
+      hisy[ii, jj] <- tmp[ii - 1, jj]
+    }
+  }
+
+  for (jj in 1:nvar) hisy[1, jj] <- y[jj]
+
+    v <- v + h
+    aM1[i, ] <- y
+    t1[i] <- v
+  }
+
+  if (!is.null(final_state)) {
+    # Create a data frame with the final values
+    final_values_temp <- data.frame(alp = alp, A1 = final_state[2], A2 = final_state[4])
+
+    # Append the final values to the final_values data frame
+    d_EfMalp2_final_values <- rbind(d_EfMalp2_final_values, final_values_temp)
+  }
+}
+
+# Output the final values
+d_EfMalp2_final_values
+
+# Save the final_values data frame as a CSV file
+file_path <- "/Users/tobythompson/Desktop/final_values/d_EfMalp2_final_values.csv"
+write.csv(d_EfMalp2_final_values, file = file_path, row.names = FALSE)
+
+```
+
+Male Adult Death Rate
+
+```{r}
+# Define the range of d_Am_a values
+alp_values <- seq(0.2, 0.5, by = 0.02)
+
+# Initialize an empty data frame to store final values
+d_AmMalp2_final_values <- data.frame(A1 = numeric(0), A2 = numeric(0))
+
+# Iterate over the range of d_Am_a values
+for (alp_value in alp_values) {
+  # Assign d_Am_a and calculate d_Am_b
+  alp <- alp_value
+  bet <- 1 - alp
+
+  pastvalue <- function(dyno, lag) {
+    tinc=0.01
+    bfl=3000
+
+    maxlag=(bfl-1)*tinc
+    p=0
+
+    if(lag>maxlag){
+      if(p==bfl) midpnt=1 else midpnt=p+1
+      past=hisy[midpnt,dyno]
+    } else {
+      dispnt=floor((lag/tinc)+0.5)
+      disp=(dispnt*tinc-lag)/tinc
+
+      A=0.5*disp*(disp-1)
+      B=(1-disp^2)
+      C=0.5*disp*(disp+1)
+
+      if (dispnt>p) midpnt=p+dispnt else midpnt=bfl+p-dispnt
+
+      if(midpnt==1) leftpnt=bfl else leftpnt=midpnt-1
+      if(midpnt==bfl) rightpnt=1 else rightpnt=midpnt+1
+
+      R=hisy[rightpnt,dyno]
+      L=hisy[leftpnt,dyno]
+      M=hisy[midpnt,dyno]
+
+      past=A*L+B*M+C*R
+    }
+
+    past 
+  }
+
+  nvar = 4
+
+
+
+  r_a = 6
+  K_a = 50
+d_Em_a = 0.5
+  d_Ef_a = 0.5
+  d_Af_a = 0.5
+d_Am_a = 0.2
+  j_m_a = 0.5
+  j_f_a = 0.5
+  t_m_a = 0.1
+  t_f_a = 0.1
+
+  e_m_a = 0.5
+  e_f_a = 1 - e_m_a
+
+  a_c_a = 6
+
+  c_m_a = 0.7
+  c_f_a = 0
+  c_t_a = c_m_a + c_f_a
+
+  r1_a = (r_a*exp(-((1-d_Em_a)*e_m_a + (1-d_Ef_a)*e_f_a)))
+  d_Em1_a = d_Em_a*exp(-a_c_a*((alp*(c_m_a + c_f_a)) + (1 - bet)*(c_m_a + c_f_a)))
+  d_Ef1_a = d_Ef_a*exp(-a_c_a*((alp*(c_m_a + c_f_a)) + (1 - bet)*(c_m_a + c_f_a)))
+  d_Am1_a = 1 - ((1 - d_Am_a)*exp(-c_m_a))
+  d_Af1_a = 1- ((1-d_Af_a)*exp(-((1-d_Em_a)*e_m_a + (1-d_Ef_a)*e_f_a + c_f_a)))
+
+  m_Em_a = 0.5
+  m_Ef_a = 0.5
+
+  e_sm1_a = e_m_a*(1-d_Em1_a)
+  e_sf1_a = e_f_a*(1-d_Ef1_a)
+
+  a_f1_a = e_f_a*(1-d_Ef1_a)*m_Ef_a*j_f_a
+  e_mf1_a = e_f_a*(1-d_Ef1_a)*m_Ef_a
+  a_m1_a = e_m_a*(1-d_Em1_a)*m_Em_a*j_m_a
+  e_mm1_a = e_m_a*(1-d_Em1_a)*m_Em_a
+
+  r_b = 6
+  K_b = 50
+d_Em_b = 0.5
+  d_Ef_b = 0.5
+  d_Af_b = 0.5
+d_Am_b = 0.8
+  j_m_b = 0.5
+  j_f_b = 0.5
+  t_m_b = 0.1
+  t_f_b = 0.1
+
+  e_m_b = 0.5
+  e_f_b = 1 - e_m_b
+
+  a_c_b = 6
+
+  c_m_b = 0.7
+  c_f_b = 0
+  c_t_b = c_m_b + c_f_b
+
+  r1_b = (r_b*exp(-((1-d_Em_b)*e_m_b + (1-d_Ef_b)*e_f_b)))
+  d_Em1_b = d_Em_b*exp(-a_c_b*(((1-alp)*(c_m_b + c_f_b)) + bet*(c_m_b + c_f_b)))
+  d_Ef1_b = d_Ef_b*exp(-a_c_b*(((1-alp)*(c_m_b + c_f_b)) + bet*(c_m_b + c_f_b)))
+  d_Am1_b = 1 - ((1 - d_Am_b)*exp(-c_m_b))
+  d_Af1_b = 1- ((1-d_Af_b)*exp(-((1-d_Em_b)*e_m_b + (1-d_Ef_b)*e_f_b + c_f_b)))
+
+  m_Em_b = 0.5
+  m_Ef_b = 0.5
+
+  e_sm1_b = e_m_b*(1-d_Em1_b)
+  e_sf1_b = e_f_b*(1-d_Ef1_b)
+
+  a_f1_b = e_f_b*(1-d_Ef1_b)*m_Ef_b*j_f_b
+  e_mf1_b = e_f_b*(1-d_Ef1_b)*m_Ef_b
+  a_m1_b = e_m_b*(1-d_Em1_b)*m_Em_b*j_m_b
+  e_mm1_b = e_m_b*(1-d_Em1_b)*m_Em_b
+
+  y=array(dim=(nvar))
+
+  derivs <- function(x, y) {
+    yx[1] = r1_a*(alp*y[2]*a_f1_a + (1-bet)*y[4]*a_f1_a)*(1-((alp*y[2] + (1-bet)*y[4])/K_a))- y[1]*(d_Em1_a*e_m_a + d_Ef1_a*e_f_a + m_Em_a*e_sm1_a + m_Ef_a*e_sf1_a)
+    yx[2] = j_m_a*e_mm1_a*pastvalue(1,t_m_a) + j_f_a*e_mf1_a*pastvalue(1,t_f_a) - y[2]*(d_Am1_a*a_m1_a + d_Af1_a*a_f1_a)
+
+    yx[3] = r1_b*((1-alp)*y[2]*a_f1_b + bet*y[4]*a_f1_b)*(1-(((1-alp)*y[2] + bet*y[4])/K_b))- y[3]*(d_Em1_b*e_m_b + d_Ef1_b*e_f_b + m_Em_b*e_sm1_b + m_Ef_b*e_sf1_b)
+    yx[4] = j_m_b*e_mm1_b*pastvalue(3,t_m_b) + j_f_b*e_mf1_b*pastvalue(3,t_f_b) - y[4]*(d_Am1_b*a_m1_b + d_Af1_b*a_f1_b)
+
+    yx
+  }
+
+  #set the initial conditions 
+  y[1]=1
+  y[2]=1
+  y[3]=1
+  y[4]=1
+
+  #set the number of iterations (obs), integration step (h), buffer length (buflen) and start time (v)
+
+  obs=400000
+  buflen=3000
+  v=0.0
+  h=0.01
+
+  #arrays for the RK4 integrator (see below)
+
+  yt=array(1:nvar)
+  dyt=array(1:nvar)
+  dym=array(1:nvar)
+  yout=array(1:nvar)
+  yx=array(1:nvar)
+  eqn=array(1:nvar)
+
+  #these next two lines set up the history variables - it is necessary to carefully define what this history should be and ensure the state variable make sense
+
+  hisy=array(0,dim=c(buflen,nvar))
+  tmp=array(0,dim=c(buflen,nvar))
+  
+  #4th order runge-kutta function
+
+  rk4 <- function(dydx, y, t, n) {
+    for(jj in	1:n)
+      yt[jj]=y[jj]+dydx[jj]*h/2
+    dyt=derivs(t+h/2,yt)
+    for(jj in 1:n)	
+      yt[jj]=y[jj]+h/2*dyt[jj]
+    dym=derivs(t+h/2,yt)
+    for(jj in 1:n)
+      yt[jj]=y[jj]+h*dym[jj]
+    dym=dyt+dym
+    dyt=derivs(t+h,yt)
+    for(jj in 1:n)
+      yout[jj]=y[jj]+(h/6)*(dydx[jj]+dyt[jj]+2*dym[jj])
+    yout
+  }
+
+  # Define output arrays
+  t1 <- array(1:obs)
+  aM1 <- array(dim = c(obs, nvar))
+
+  # Initial state
+  y[1] <- 1
+  y[2] <- 1
+  y[3] <- 1
+  y[4] <- 1
+
+  # Initial convergence criterion threshold
+  convergence_threshold <- 1e-5
+
+  # Initialize previous state
+  previous_state <- y
+  final_state <- NULL
+
+  # Iterate the model
+  for (i in 1:obs) {
+    eqn <- derivs(v, y)
+    y <- rk4(eqn, y, v, nvar)
+
+    # Calculate the difference between the current state and the previous state
+    difference <- sum(abs(y - previous_state))
+
+    # Check if the system has reached equilibrium (the difference is below the threshold)
+    if (difference < convergence_threshold) {
+      # If the system has reached equilibrium, break out of the loop
+      final_state <- y
+      break
+    }
+
+    # Update the previous state
+    previous_state <- y
+
+    # Update the history buffer
+  for (ii in 1:buflen) {
+    for (jj in 1:nvar) {
+      tmp[ii, jj] <- hisy[ii, jj]
+    }
+  }
+
+  for (ii in 2:buflen) {
+    for (jj in 1:nvar) {
+      hisy[ii, jj] <- tmp[ii - 1, jj]
+    }
+  }
+
+  for (jj in 1:nvar) hisy[1, jj] <- y[jj]
+
+    v <- v + h
+    aM1[i, ] <- y
+    t1[i] <- v
+  }
+
+  if (!is.null(final_state)) {
+    # Create a data frame with the final values
+    final_values_temp <- data.frame(alp = alp, A1 = final_state[2], A2 = final_state[4])
+
+    # Append the final values to the final_values data frame
+    d_AmMalp2_final_values <- rbind(d_AmMalp2_final_values, final_values_temp)
+  }
+}
+
+# Output the final values
+d_AmMalp2_final_values
+
+# Save the final_values data frame as a CSV file
+file_path <- "/Users/tobythompson/Desktop/final_values/d_AmMalp2_final_values.csv"
+write.csv(d_AmMalp2_final_values, file = file_path, row.names = FALSE)
+
+```
+
+
+Female Egg Death Rate
+```{r}
+# Define the range of d_Am_a values
+alp_values <- seq(0.2, 0.5, by = 0.02)
+
+# Initialize an empty data frame to store final values
+d_AfMalp2_final_values <- data.frame(A1 = numeric(0), A2 = numeric(0))
+
+# Iterate over the range of d_Am_a values
+for (alp_value in alp_values) {
+  # Assign d_Am_a and calculate d_Am_b
+  alp <- alp_value
+  bet <- 1 - alp
+
+  pastvalue <- function(dyno, lag) {
+    tinc=0.01
+    bfl=3000
+
+    maxlag=(bfl-1)*tinc
+    p=0
+
+    if(lag>maxlag){
+      if(p==bfl) midpnt=1 else midpnt=p+1
+      past=hisy[midpnt,dyno]
+    } else {
+      dispnt=floor((lag/tinc)+0.5)
+      disp=(dispnt*tinc-lag)/tinc
+
+      A=0.5*disp*(disp-1)
+      B=(1-disp^2)
+      C=0.5*disp*(disp+1)
+
+      if (dispnt>p) midpnt=p+dispnt else midpnt=bfl+p-dispnt
+
+      if(midpnt==1) leftpnt=bfl else leftpnt=midpnt-1
+      if(midpnt==bfl) rightpnt=1 else rightpnt=midpnt+1
+
+      R=hisy[rightpnt,dyno]
+      L=hisy[leftpnt,dyno]
+      M=hisy[midpnt,dyno]
+
+      past=A*L+B*M+C*R
+    }
+
+    past 
+  }
+
+  nvar = 4
+
+
+
+  r_a = 6
+  K_a = 50
+d_Ef_a = 0.5
+  d_Em_a = 0.5
+d_Af_a = 0.2
+  d_Am_a = 0.5
+  j_m_a = 0.5
+  j_f_a = 0.5
+  t_m_a = 0.1
+  t_f_a = 0.1
+
+  e_m_a = 0.5
+  e_f_a = 1 - e_m_a
+
+  a_c_a = 6
+
+  c_m_a = 0.7
+  c_f_a = 0
+  c_t_a = c_m_a + c_f_a
+
+  r1_a = (r_a*exp(-((1-d_Em_a)*e_m_a + (1-d_Ef_a)*e_f_a)))
+  d_Em1_a = d_Em_a*exp(-a_c_a*((alp*(c_m_a + c_f_a)) + (1 - bet)*(c_m_a + c_f_a)))
+  d_Ef1_a = d_Ef_a*exp(-a_c_a*((alp*(c_m_a + c_f_a)) + (1 - bet)*(c_m_a + c_f_a)))
+  d_Am1_a = 1 - ((1 - d_Am_a)*exp(-c_m_a))
+  d_Af1_a = 1- ((1-d_Af_a)*exp(-((1-d_Em_a)*e_m_a + (1-d_Ef_a)*e_f_a + c_f_a)))
+
+  m_Em_a = 0.5
+  m_Ef_a = 0.5
+
+  e_sm1_a = e_m_a*(1-d_Em1_a)
+  e_sf1_a = e_f_a*(1-d_Ef1_a)
+
+  a_f1_a = e_f_a*(1-d_Ef1_a)*m_Ef_a*j_f_a
+  e_mf1_a = e_f_a*(1-d_Ef1_a)*m_Ef_a
+  a_m1_a = e_m_a*(1-d_Em1_a)*m_Em_a*j_m_a
+  e_mm1_a = e_m_a*(1-d_Em1_a)*m_Em_a
+
+  r_b = 6
+  K_b = 50
+d_Ef_b = 0.5
+  d_Em_b = 0.5
+d_Af_b = 0.8
+  d_Am_b = 0.5
+  j_m_b = 0.5
+  j_f_b = 0.5
+  t_m_b = 0.1
+  t_f_b = 0.1
+
+  e_m_b = 0.5
+  e_f_b = 1 - e_m_b
+
+  a_c_b = 6
+
+  c_m_b = 0.7
+  c_f_b = 0
+  c_t_b = c_m_b + c_f_b
+
+  r1_b = (r_b*exp(-((1-d_Em_b)*e_m_b + (1-d_Ef_b)*e_f_b)))
+  d_Em1_b = d_Em_b*exp(-a_c_b*(((1-alp)*(c_m_b + c_f_b)) + bet*(c_m_b + c_f_b)))
+  d_Ef1_b = d_Ef_b*exp(-a_c_b*(((1-alp)*(c_m_b + c_f_b)) + bet*(c_m_b + c_f_b)))
+  d_Am1_b = 1 - ((1 - d_Am_b)*exp(-c_m_b))
+  d_Af1_b = 1- ((1-d_Af_b)*exp(-((1-d_Em_b)*e_m_b + (1-d_Ef_b)*e_f_b + c_f_b)))
+
+  m_Em_b = 0.5
+  m_Ef_b = 0.5
+
+  e_sm1_b = e_m_b*(1-d_Em1_b)
+  e_sf1_b = e_f_b*(1-d_Ef1_b)
+
+  a_f1_b = e_f_b*(1-d_Ef1_b)*m_Ef_b*j_f_b
+  e_mf1_b = e_f_b*(1-d_Ef1_b)*m_Ef_b
+  a_m1_b = e_m_b*(1-d_Em1_b)*m_Em_b*j_m_b
+  e_mm1_b = e_m_b*(1-d_Em1_b)*m_Em_b
+
+  y=array(dim=(nvar))
+
+  derivs <- function(x, y) {
+    yx[1] = r1_a*(alp*y[2]*a_f1_a + (1-bet)*y[4]*a_f1_a)*(1-((alp*y[2] + (1-bet)*y[4])/K_a))- y[1]*(d_Em1_a*e_m_a + d_Ef1_a*e_f_a + m_Em_a*e_sm1_a + m_Ef_a*e_sf1_a)
+    yx[2] = j_m_a*e_mm1_a*pastvalue(1,t_m_a) + j_f_a*e_mf1_a*pastvalue(1,t_f_a) - y[2]*(d_Am1_a*a_m1_a + d_Af1_a*a_f1_a)
+
+    yx[3] = r1_b*((1-alp)*y[2]*a_f1_b + bet*y[4]*a_f1_b)*(1-(((1-alp)*y[2] + bet*y[4])/K_b))- y[3]*(d_Em1_b*e_m_b + d_Ef1_b*e_f_b + m_Em_b*e_sm1_b + m_Ef_b*e_sf1_b)
+    yx[4] = j_m_b*e_mm1_b*pastvalue(3,t_m_b) + j_f_b*e_mf1_b*pastvalue(3,t_f_b) - y[4]*(d_Am1_b*a_m1_b + d_Af1_b*a_f1_b)
+
+    yx
+  }
+
+  #set the initial conditions 
+  y[1]=1
+  y[2]=1
+  y[3]=1
+  y[4]=1
+
+  #set the number of iterations (obs), integration step (h), buffer length (buflen) and start time (v)
+
+  obs=400000
+  buflen=3000
+  v=0.0
+  h=0.01
+
+  #arrays for the RK4 integrator (see below)
+
+  yt=array(1:nvar)
+  dyt=array(1:nvar)
+  dym=array(1:nvar)
+  yout=array(1:nvar)
+  yx=array(1:nvar)
+  eqn=array(1:nvar)
+
+  #these next two lines set up the history variables - it is necessary to carefully define what this history should be and ensure the state variable make sense
+
+  hisy=array(0,dim=c(buflen,nvar))
+  tmp=array(0,dim=c(buflen,nvar))
+  
+  #4th order runge-kutta function
+
+  rk4 <- function(dydx, y, t, n) {
+    for(jj in	1:n)
+      yt[jj]=y[jj]+dydx[jj]*h/2
+    dyt=derivs(t+h/2,yt)
+    for(jj in 1:n)	
+      yt[jj]=y[jj]+h/2*dyt[jj]
+    dym=derivs(t+h/2,yt)
+    for(jj in 1:n)
+      yt[jj]=y[jj]+h*dym[jj]
+    dym=dyt+dym
+    dyt=derivs(t+h,yt)
+    for(jj in 1:n)
+      yout[jj]=y[jj]+(h/6)*(dydx[jj]+dyt[jj]+2*dym[jj])
+    yout
+  }
+
+  # Define output arrays
+  t1 <- array(1:obs)
+  aM1 <- array(dim = c(obs, nvar))
+
+  # Initial state
+  y[1] <- 1
+  y[2] <- 1
+  y[3] <- 1
+  y[4] <- 1
+
+  # Initial convergence criterion threshold
+  convergence_threshold <- 1e-5
+
+  # Initialize previous state
+  previous_state <- y
+  final_state <- NULL
+
+  # Iterate the model
+  for (i in 1:obs) {
+    eqn <- derivs(v, y)
+    y <- rk4(eqn, y, v, nvar)
+
+    # Calculate the difference between the current state and the previous state
+    difference <- sum(abs(y - previous_state))
+
+    # Check if the system has reached equilibrium (the difference is below the threshold)
+    if (difference < convergence_threshold) {
+      # If the system has reached equilibrium, break out of the loop
+      final_state <- y
+      break
+    }
+
+    # Update the previous state
+    previous_state <- y
+
+    # Update the history buffer
+  for (ii in 1:buflen) {
+    for (jj in 1:nvar) {
+      tmp[ii, jj] <- hisy[ii, jj]
+    }
+  }
+
+  for (ii in 2:buflen) {
+    for (jj in 1:nvar) {
+      hisy[ii, jj] <- tmp[ii - 1, jj]
+    }
+  }
+
+  for (jj in 1:nvar) hisy[1, jj] <- y[jj]
+
+    v <- v + h
+    aM1[i, ] <- y
+    t1[i] <- v
+  }
+
+  if (!is.null(final_state)) {
+    # Create a data frame with the final values
+    final_values_temp <- data.frame(alp = alp, A1 = final_state[2], A2 = final_state[4])
+
+    # Append the final values to the final_values data frame
+    d_AfMalp2_final_values <- rbind(d_AfMalp2_final_values, final_values_temp)
+  }
+}
+
+# Output the final values
+d_AfMalp2_final_values
+
+# Save the final_values data frame as a CSV file
+file_path <- "/Users/tobythompson/Desktop/final_values/d_AfMalp2_final_values.csv"
+write.csv(d_AfMalp2_final_values, file = file_path, row.names = FALSE)
+
+```
+
+Male Juvenile Survival Rate
+
+```{r}
+# Define the range of d_Am_a values
+alp_values <- seq(0.2, 0.5, by = 0.02)
+
+# Initialize an empty data frame to store final values
+j_mMalp2_final_values <- data.frame(A1 = numeric(0), A2 = numeric(0))
+
+# Iterate over the range of d_Am_a values
+for (alp_value in alp_values) {
+  # Assign d_Am_a and calculate d_Am_b
+  alp <- alp_value
+  bet <- 1 - alp
+
+  pastvalue <- function(dyno, lag) {
+    tinc=0.01
+    bfl=3000
+
+    maxlag=(bfl-1)*tinc
+    p=0
+
+    if(lag>maxlag){
+      if(p==bfl) midpnt=1 else midpnt=p+1
+      past=hisy[midpnt,dyno]
+    } else {
+      dispnt=floor((lag/tinc)+0.5)
+      disp=(dispnt*tinc-lag)/tinc
+
+      A=0.5*disp*(disp-1)
+      B=(1-disp^2)
+      C=0.5*disp*(disp+1)
+
+      if (dispnt>p) midpnt=p+dispnt else midpnt=bfl+p-dispnt
+
+      if(midpnt==1) leftpnt=bfl else leftpnt=midpnt-1
+      if(midpnt==bfl) rightpnt=1 else rightpnt=midpnt+1
+
+      R=hisy[rightpnt,dyno]
+      L=hisy[leftpnt,dyno]
+      M=hisy[midpnt,dyno]
+
+      past=A*L+B*M+C*R
+    }
+
+    past 
+  }
+
+  nvar = 4
+
+
+
+  r_a = 6
+  K_a = 50
+d_Em_a = 0.5
+  d_Ef_a = 0.5
+  d_Af_a = 0.5
+d_Am_a = 0.5
+j_m_a = 0.2
+  j_f_a = 0.5
+  t_m_a = 0.1
+  t_f_a = 0.1
+
+  e_m_a = 0.5
+  e_f_a = 1 - e_m_a
+
+  a_c_a = 6
+
+  c_m_a = 0.7
+  c_f_a = 0
+  c_t_a = c_m_a + c_f_a
+
+  r1_a = (r_a*exp(-((1-d_Em_a)*e_m_a + (1-d_Ef_a)*e_f_a)))
+  d_Em1_a = d_Em_a*exp(-a_c_a*((alp*(c_m_a + c_f_a)) + (1 - bet)*(c_m_a + c_f_a)))
+  d_Ef1_a = d_Ef_a*exp(-a_c_a*((alp*(c_m_a + c_f_a)) + (1 - bet)*(c_m_a + c_f_a)))
+  d_Am1_a = 1 - ((1 - d_Am_a)*exp(-c_m_a))
+  d_Af1_a = 1- ((1-d_Af_a)*exp(-((1-d_Em_a)*e_m_a + (1-d_Ef_a)*e_f_a + c_f_a)))
+
+  m_Em_a = 0.5
+  m_Ef_a = 0.5
+
+  e_sm1_a = e_m_a*(1-d_Em1_a)
+  e_sf1_a = e_f_a*(1-d_Ef1_a)
+
+  a_f1_a = e_f_a*(1-d_Ef1_a)*m_Ef_a*j_f_a
+  e_mf1_a = e_f_a*(1-d_Ef1_a)*m_Ef_a
+  a_m1_a = e_m_a*(1-d_Em1_a)*m_Em_a*j_m_a
+  e_mm1_a = e_m_a*(1-d_Em1_a)*m_Em_a
+
+  r_b = 6
+  K_b = 50
+d_Em_b = 0.5
+  d_Ef_b = 0.5
+  d_Af_b = 0.5
+d_Am_b = 0.5
+j_m_b = 0.8
+  j_f_b = 0.5
+  t_m_b = 0.1
+  t_f_b = 0.1
+
+  e_m_b = 0.5
+  e_f_b = 1 - e_m_b
+
+  a_c_b = 6
+
+  c_m_b = 0.7
+  c_f_b = 0
+  c_t_b = c_m_b + c_f_b
+
+  r1_b = (r_b*exp(-((1-d_Em_b)*e_m_b + (1-d_Ef_b)*e_f_b)))
+  d_Em1_b = d_Em_b*exp(-a_c_b*(((1-alp)*(c_m_b + c_f_b)) + bet*(c_m_b + c_f_b)))
+  d_Ef1_b = d_Ef_b*exp(-a_c_b*(((1-alp)*(c_m_b + c_f_b)) + bet*(c_m_b + c_f_b)))
+  d_Am1_b = 1 - ((1 - d_Am_b)*exp(-c_m_b))
+  d_Af1_b = 1- ((1-d_Af_b)*exp(-((1-d_Em_b)*e_m_b + (1-d_Ef_b)*e_f_b + c_f_b)))
+
+  m_Em_b = 0.5
+  m_Ef_b = 0.5
+
+  e_sm1_b = e_m_b*(1-d_Em1_b)
+  e_sf1_b = e_f_b*(1-d_Ef1_b)
+
+  a_f1_b = e_f_b*(1-d_Ef1_b)*m_Ef_b*j_f_b
+  e_mf1_b = e_f_b*(1-d_Ef1_b)*m_Ef_b
+  a_m1_b = e_m_b*(1-d_Em1_b)*m_Em_b*j_m_b
+  e_mm1_b = e_m_b*(1-d_Em1_b)*m_Em_b
+
+  y=array(dim=(nvar))
+
+  derivs <- function(x, y) {
+    yx[1] = r1_a*(alp*y[2]*a_f1_a + (1-bet)*y[4]*a_f1_a)*(1-((alp*y[2] + (1-bet)*y[4])/K_a))- y[1]*(d_Em1_a*e_m_a + d_Ef1_a*e_f_a + m_Em_a*e_sm1_a + m_Ef_a*e_sf1_a)
+    yx[2] = j_m_a*e_mm1_a*pastvalue(1,t_m_a) + j_f_a*e_mf1_a*pastvalue(1,t_f_a) - y[2]*(d_Am1_a*a_m1_a + d_Af1_a*a_f1_a)
+
+    yx[3] = r1_b*((1-alp)*y[2]*a_f1_b + bet*y[4]*a_f1_b)*(1-(((1-alp)*y[2] + bet*y[4])/K_b))- y[3]*(d_Em1_b*e_m_b + d_Ef1_b*e_f_b + m_Em_b*e_sm1_b + m_Ef_b*e_sf1_b)
+    yx[4] = j_m_b*e_mm1_b*pastvalue(3,t_m_b) + j_f_b*e_mf1_b*pastvalue(3,t_f_b) - y[4]*(d_Am1_b*a_m1_b + d_Af1_b*a_f1_b)
+
+    yx
+  }
+
+  #set the initial conditions 
+  y[1]=1
+  y[2]=1
+  y[3]=1
+  y[4]=1
+
+  #set the number of iterations (obs), integration step (h), buffer length (buflen) and start time (v)
+
+  obs=400000
+  buflen=3000
+  v=0.0
+  h=0.01
+
+  #arrays for the RK4 integrator (see below)
+
+  yt=array(1:nvar)
+  dyt=array(1:nvar)
+  dym=array(1:nvar)
+  yout=array(1:nvar)
+  yx=array(1:nvar)
+  eqn=array(1:nvar)
+
+  #these next two lines set up the history variables - it is necessary to carefully define what this history should be and ensure the state variable make sense
+
+  hisy=array(0,dim=c(buflen,nvar))
+  tmp=array(0,dim=c(buflen,nvar))
+  
+  #4th order runge-kutta function
+
+  rk4 <- function(dydx, y, t, n) {
+    for(jj in	1:n)
+      yt[jj]=y[jj]+dydx[jj]*h/2
+    dyt=derivs(t+h/2,yt)
+    for(jj in 1:n)	
+      yt[jj]=y[jj]+h/2*dyt[jj]
+    dym=derivs(t+h/2,yt)
+    for(jj in 1:n)
+      yt[jj]=y[jj]+h*dym[jj]
+    dym=dyt+dym
+    dyt=derivs(t+h,yt)
+    for(jj in 1:n)
+      yout[jj]=y[jj]+(h/6)*(dydx[jj]+dyt[jj]+2*dym[jj])
+    yout
+  }
+
+  # Define output arrays
+  t1 <- array(1:obs)
+  aM1 <- array(dim = c(obs, nvar))
+
+  # Initial state
+  y[1] <- 1
+  y[2] <- 1
+  y[3] <- 1
+  y[4] <- 1
+
+  # Initial convergence criterion threshold
+  convergence_threshold <- 1e-5
+
+  # Initialize previous state
+  previous_state <- y
+  final_state <- NULL
+
+  # Iterate the model
+  for (i in 1:obs) {
+    eqn <- derivs(v, y)
+    y <- rk4(eqn, y, v, nvar)
+
+    # Calculate the difference between the current state and the previous state
+    difference <- sum(abs(y - previous_state))
+
+    # Check if the system has reached equilibrium (the difference is below the threshold)
+    if (difference < convergence_threshold) {
+      # If the system has reached equilibrium, break out of the loop
+      final_state <- y
+      break
+    }
+
+    # Update the previous state
+    previous_state <- y
+
+    # Update the history buffer
+  for (ii in 1:buflen) {
+    for (jj in 1:nvar) {
+      tmp[ii, jj] <- hisy[ii, jj]
+    }
+  }
+
+  for (ii in 2:buflen) {
+    for (jj in 1:nvar) {
+      hisy[ii, jj] <- tmp[ii - 1, jj]
+    }
+  }
+
+  for (jj in 1:nvar) hisy[1, jj] <- y[jj]
+
+    v <- v + h
+    aM1[i, ] <- y
+    t1[i] <- v
+  }
+
+  if (!is.null(final_state)) {
+    # Create a data frame with the final values
+    final_values_temp <- data.frame(alp = alp, A1 = final_state[2], A2 = final_state[4])
+
+    # Append the final values to the final_values data frame
+    j_mMalp2_final_values <- rbind(j_mMalp2_final_values, final_values_temp)
+  }
+}
+
+# Output the final values
+j_mMalp2_final_values
+
+# Save the final_values data frame as a CSV file
+file_path <- "/Users/tobythompson/Desktop/final_values/j_mMalp2_final_values.csv"
+write.csv(j_mMalp2_final_values, file = file_path, row.names = FALSE)
+
+```
+
+Female Juvenile Survival Rate
+```{r}
+# Define the range of d_Am_a values
+alp_values <- seq(0.44, 0.5, by = 0.02)
+
+# Initialize an empty data frame to store final values
+j_fMalp2_final_values <- data.frame(A1 = numeric(0), A2 = numeric(0))
+
+# Iterate over the range of d_Am_a values
+for (alp_value in alp_values) {
+  # Assign d_Am_a and calculate d_Am_b
+  alp <- alp_value
+  bet <- 1 - alp
+
+  pastvalue <- function(dyno, lag) {
+    tinc=0.01
+    bfl=3000
+
+    maxlag=(bfl-1)*tinc
+    p=0
+
+    if(lag>maxlag){
+      if(p==bfl) midpnt=1 else midpnt=p+1
+      past=hisy[midpnt,dyno]
+    } else {
+      dispnt=floor((lag/tinc)+0.5)
+      disp=(dispnt*tinc-lag)/tinc
+
+      A=0.5*disp*(disp-1)
+      B=(1-disp^2)
+      C=0.5*disp*(disp+1)
+
+      if (dispnt>p) midpnt=p+dispnt else midpnt=bfl+p-dispnt
+
+      if(midpnt==1) leftpnt=bfl else leftpnt=midpnt-1
+      if(midpnt==bfl) rightpnt=1 else rightpnt=midpnt+1
+
+      R=hisy[rightpnt,dyno]
+      L=hisy[leftpnt,dyno]
+      M=hisy[midpnt,dyno]
+
+      past=A*L+B*M+C*R
+    }
+
+    past 
+  }
+
+  nvar = 4
+
+
+  r_a = 6
+  K_a = 50
+d_Em_a = 0.5
+  d_Ef_a = 0.5
+  d_Af_a = 0.5
+d_Am_a = 0.5
+j_f_a = 0.2
+  j_m_a = 0.5
+  t_m_a = 0.1
+  t_f_a = 0.1
+
+  e_m_a = 0.5
+  e_f_a = 1 - e_m_a
+
+  a_c_a = 6
+
+  c_m_a = 0.7
+  c_f_a = 0
+  c_t_a = c_m_a + c_f_a
+
+  r1_a = (r_a*exp(-((1-d_Em_a)*e_m_a + (1-d_Ef_a)*e_f_a)))
+  d_Em1_a = d_Em_a*exp(-a_c_a*((alp*(c_m_a + c_f_a)) + (1 - bet)*(c_m_a + c_f_a)))
+  d_Ef1_a = d_Ef_a*exp(-a_c_a*((alp*(c_m_a + c_f_a)) + (1 - bet)*(c_m_a + c_f_a)))
+  d_Am1_a = 1 - ((1 - d_Am_a)*exp(-c_m_a))
+  d_Af1_a = 1- ((1-d_Af_a)*exp(-((1-d_Em_a)*e_m_a + (1-d_Ef_a)*e_f_a + c_f_a)))
+
+  m_Em_a = 0.5
+  m_Ef_a = 0.5
+
+  e_sm1_a = e_m_a*(1-d_Em1_a)
+  e_sf1_a = e_f_a*(1-d_Ef1_a)
+
+  a_f1_a = e_f_a*(1-d_Ef1_a)*m_Ef_a*j_f_a
+  e_mf1_a = e_f_a*(1-d_Ef1_a)*m_Ef_a
+  a_m1_a = e_m_a*(1-d_Em1_a)*m_Em_a*j_m_a
+  e_mm1_a = e_m_a*(1-d_Em1_a)*m_Em_a
+
+  r_b = 6
+  K_b = 50
+d_Em_b = 0.5
+  d_Ef_b = 0.5
+  d_Af_b = 0.5
+d_Am_b = 0.5
+j_f_b = 0.8
+  j_m_b = 0.5
+  t_m_b = 0.1
+  t_f_b = 0.1
+
+  e_m_b = 0.5
+  e_f_b = 1 - e_m_b
+
+  a_c_b = 6
+
+  c_m_b = 0.7
+  c_f_b = 0
+  c_t_b = c_m_b + c_f_b
+
+  r1_b = (r_b*exp(-((1-d_Em_b)*e_m_b + (1-d_Ef_b)*e_f_b)))
+  d_Em1_b = d_Em_b*exp(-a_c_b*(((1-alp)*(c_m_b + c_f_b)) + bet*(c_m_b + c_f_b)))
+  d_Ef1_b = d_Ef_b*exp(-a_c_b*(((1-alp)*(c_m_b + c_f_b)) + bet*(c_m_b + c_f_b)))
+  d_Am1_b = 1 - ((1 - d_Am_b)*exp(-c_m_b))
+  d_Af1_b = 1- ((1-d_Af_b)*exp(-((1-d_Em_b)*e_m_b + (1-d_Ef_b)*e_f_b + c_f_b)))
+
+  m_Em_b = 0.5
+  m_Ef_b = 0.5
+
+  e_sm1_b = e_m_b*(1-d_Em1_b)
+  e_sf1_b = e_f_b*(1-d_Ef1_b)
+
+  a_f1_b = e_f_b*(1-d_Ef1_b)*m_Ef_b*j_f_b
+  e_mf1_b = e_f_b*(1-d_Ef1_b)*m_Ef_b
+  a_m1_b = e_m_b*(1-d_Em1_b)*m_Em_b*j_m_b
+  e_mm1_b = e_m_b*(1-d_Em1_b)*m_Em_b
+
+  y=array(dim=(nvar))
+
+  derivs <- function(x, y) {
+    yx[1] = r1_a*(alp*y[2]*a_f1_a + (1-bet)*y[4]*a_f1_a)*(1-((alp*y[2] + (1-bet)*y[4])/K_a))- y[1]*(d_Em1_a*e_m_a + d_Ef1_a*e_f_a + m_Em_a*e_sm1_a + m_Ef_a*e_sf1_a)
+    yx[2] = j_m_a*e_mm1_a*pastvalue(1,t_m_a) + j_f_a*e_mf1_a*pastvalue(1,t_f_a) - y[2]*(d_Am1_a*a_m1_a + d_Af1_a*a_f1_a)
+
+    yx[3] = r1_b*((1-alp)*y[2]*a_f1_b + bet*y[4]*a_f1_b)*(1-(((1-alp)*y[2] + bet*y[4])/K_b))- y[3]*(d_Em1_b*e_m_b + d_Ef1_b*e_f_b + m_Em_b*e_sm1_b + m_Ef_b*e_sf1_b)
+    yx[4] = j_m_b*e_mm1_b*pastvalue(3,t_m_b) + j_f_b*e_mf1_b*pastvalue(3,t_f_b) - y[4]*(d_Am1_b*a_m1_b + d_Af1_b*a_f1_b)
+
+    yx
+  }
+
+  #set the initial conditions 
+  y[1]=1
+  y[2]=1
+  y[3]=1
+  y[4]=1
+
+  #set the number of iterations (obs), integration step (h), buffer length (buflen) and start time (v)
+
+  obs=400000
+  buflen=3000
+  v=0.0
+  h=0.01
+
+  #arrays for the RK4 integrator (see below)
+
+  yt=array(1:nvar)
+  dyt=array(1:nvar)
+  dym=array(1:nvar)
+  yout=array(1:nvar)
+  yx=array(1:nvar)
+  eqn=array(1:nvar)
+
+  #these next two lines set up the history variables - it is necessary to carefully define what this history should be and ensure the state variable make sense
+
+  hisy=array(0,dim=c(buflen,nvar))
+  tmp=array(0,dim=c(buflen,nvar))
+  
+  #4th order runge-kutta function
+
+  rk4 <- function(dydx, y, t, n) {
+    for(jj in	1:n)
+      yt[jj]=y[jj]+dydx[jj]*h/2
+    dyt=derivs(t+h/2,yt)
+    for(jj in 1:n)	
+      yt[jj]=y[jj]+h/2*dyt[jj]
+    dym=derivs(t+h/2,yt)
+    for(jj in 1:n)
+      yt[jj]=y[jj]+h*dym[jj]
+    dym=dyt+dym
+    dyt=derivs(t+h,yt)
+    for(jj in 1:n)
+      yout[jj]=y[jj]+(h/6)*(dydx[jj]+dyt[jj]+2*dym[jj])
+    yout
+  }
+
+  # Define output arrays
+  t1 <- array(1:obs)
+  aM1 <- array(dim = c(obs, nvar))
+
+  # Initial state
+  y[1] <- 1
+  y[2] <- 1
+  y[3] <- 1
+  y[4] <- 1
+
+  # Initial convergence criterion threshold
+  convergence_threshold <- 1e-5
+
+  # Initialize previous state
+  previous_state <- y
+  final_state <- NULL
+
+  # Iterate the model
+  for (i in 1:obs) {
+    eqn <- derivs(v, y)
+    y <- rk4(eqn, y, v, nvar)
+
+    # Calculate the difference between the current state and the previous state
+    difference <- sum(abs(y - previous_state))
+
+    # Check if the system has reached equilibrium (the difference is below the threshold)
+    if (difference < convergence_threshold) {
+      # If the system has reached equilibrium, break out of the loop
+      final_state <- y
+      break
+    }
+
+    # Update the previous state
+    previous_state <- y
+
+    # Update the history buffer
+  for (ii in 1:buflen) {
+    for (jj in 1:nvar) {
+      tmp[ii, jj] <- hisy[ii, jj]
+    }
+  }
+
+  for (ii in 2:buflen) {
+    for (jj in 1:nvar) {
+      hisy[ii, jj] <- tmp[ii - 1, jj]
+    }
+  }
+
+  for (jj in 1:nvar) hisy[1, jj] <- y[jj]
+
+    v <- v + h
+    aM1[i, ] <- y
+    t1[i] <- v
+  }
+
+  if (!is.null(final_state)) {
+    # Create a data frame with the final values
+    final_values_temp <- data.frame(alp = alp, A1 = final_state[2], A2 = final_state[4])
+
+    # Append the final values to the final_values data frame
+    j_fMalp2_final_values <- rbind(j_fMalp2_final_values, final_values_temp)
+  }
+}
+
+# Output the final values
+j_fMalp2_final_values
+
+# Save the final_values data frame as a CSV file
+file_path <- "/Users/tobythompson/Desktop/final_values/j_fMalp2_final_values.csv"
+write.csv(j_fMalp2_final_values, file = file_path, row.names = FALSE)
+
+```
+
+Male Maturation
+```{r}
+# Define the range of d_Am_a values
+alp_values <- seq(0.2, 0.5, by = 0.02)
+
+# Initialize an empty data frame to store final values
+m_EmMalp2_final_values <- data.frame(A1 = numeric(0), A2 = numeric(0))
+
+# Iterate over the range of d_Am_a values
+for (alp_value in alp_values) {
+  # Assign d_Am_a and calculate d_Am_b
+  alp <- alp_value
+  bet <- 1 - alp
+
+  pastvalue <- function(dyno, lag) {
+    tinc=0.01
+    bfl=3000
+
+    maxlag=(bfl-1)*tinc
+    p=0
+
+    if(lag>maxlag){
+      if(p==bfl) midpnt=1 else midpnt=p+1
+      past=hisy[midpnt,dyno]
+    } else {
+      dispnt=floor((lag/tinc)+0.5)
+      disp=(dispnt*tinc-lag)/tinc
+
+      A=0.5*disp*(disp-1)
+      B=(1-disp^2)
+      C=0.5*disp*(disp+1)
+
+      if (dispnt>p) midpnt=p+dispnt else midpnt=bfl+p-dispnt
+
+      if(midpnt==1) leftpnt=bfl else leftpnt=midpnt-1
+      if(midpnt==bfl) rightpnt=1 else rightpnt=midpnt+1
+
+      R=hisy[rightpnt,dyno]
+      L=hisy[leftpnt,dyno]
+      M=hisy[midpnt,dyno]
+
+      past=A*L+B*M+C*R
+    }
+
+    past 
+  }
+
+  nvar = 4
+
+
+  r_a = 6
+  K_a = 50
+d_Em_a = 0.5
+  d_Ef_a = 0.5
+  d_Af_a = 0.5
+d_Am_a = 0.5
+j_f_a = 0.5
+  j_m_a = 0.5
+  t_m_a = 0.1
+  t_f_a = 0.1
+
+  e_m_a = 0.5
+  e_f_a = 1 - e_m_a
+
+  a_c_a = 6
+
+  c_m_a = 0.7
+  c_f_a = 0
+  c_t_a = c_m_a + c_f_a
+
+  r1_a = (r_a*exp(-((1-d_Em_a)*e_m_a + (1-d_Ef_a)*e_f_a)))
+  d_Em1_a = d_Em_a*exp(-a_c_a*((alp*(c_m_a + c_f_a)) + (1 - bet)*(c_m_a + c_f_a)))
+  d_Ef1_a = d_Ef_a*exp(-a_c_a*((alp*(c_m_a + c_f_a)) + (1 - bet)*(c_m_a + c_f_a)))
+  d_Am1_a = 1 - ((1 - d_Am_a)*exp(-c_m_a))
+  d_Af1_a = 1- ((1-d_Af_a)*exp(-((1-d_Em_a)*e_m_a + (1-d_Ef_a)*e_f_a + c_f_a)))
+
+m_Em_a = 0.2
+  m_Ef_a = 0.5
+
+  e_sm1_a = e_m_a*(1-d_Em1_a)
+  e_sf1_a = e_f_a*(1-d_Ef1_a)
+
+  a_f1_a = e_f_a*(1-d_Ef1_a)*m_Ef_a*j_f_a
+  e_mf1_a = e_f_a*(1-d_Ef1_a)*m_Ef_a
+  a_m1_a = e_m_a*(1-d_Em1_a)*m_Em_a*j_m_a
+  e_mm1_a = e_m_a*(1-d_Em1_a)*m_Em_a
+
+  r_b = 6
+  K_b = 50
+d_Em_b = 0.5
+  d_Ef_b = 0.5
+  d_Af_b = 0.5
+d_Am_b = 0.5
+j_f_b = 0.5
+  j_m_b = 0.5
+  t_m_b = 0.1
+  t_f_b = 0.1
+
+  e_m_b = 0.5
+  e_f_b = 1 - e_m_b
+
+  a_c_b = 6
+
+  c_m_b = 0.7
+  c_f_b = 0
+  c_t_b = c_m_b + c_f_b
+
+  r1_b = (r_b*exp(-((1-d_Em_b)*e_m_b + (1-d_Ef_b)*e_f_b)))
+  d_Em1_b = d_Em_b*exp(-a_c_b*(((1-alp)*(c_m_b + c_f_b)) + bet*(c_m_b + c_f_b)))
+  d_Ef1_b = d_Ef_b*exp(-a_c_b*(((1-alp)*(c_m_b + c_f_b)) + bet*(c_m_b + c_f_b)))
+  d_Am1_b = 1 - ((1 - d_Am_b)*exp(-c_m_b))
+  d_Af1_b = 1- ((1-d_Af_b)*exp(-((1-d_Em_b)*e_m_b + (1-d_Ef_b)*e_f_b + c_f_b)))
+
+m_Em_b = 0.8
+  m_Ef_b = 0.5
+
+  e_sm1_b = e_m_b*(1-d_Em1_b)
+  e_sf1_b = e_f_b*(1-d_Ef1_b)
+
+  a_f1_b = e_f_b*(1-d_Ef1_b)*m_Ef_b*j_f_b
+  e_mf1_b = e_f_b*(1-d_Ef1_b)*m_Ef_b
+  a_m1_b = e_m_b*(1-d_Em1_b)*m_Em_b*j_m_b
+  e_mm1_b = e_m_b*(1-d_Em1_b)*m_Em_b
+
+  y=array(dim=(nvar))
+
+  derivs <- function(x, y) {
+    yx[1] = r1_a*(alp*y[2]*a_f1_a + (1-bet)*y[4]*a_f1_a)*(1-((alp*y[2] + (1-bet)*y[4])/K_a))- y[1]*(d_Em1_a*e_m_a + d_Ef1_a*e_f_a + m_Em_a*e_sm1_a + m_Ef_a*e_sf1_a)
+    yx[2] = j_m_a*e_mm1_a*pastvalue(1,t_m_a) + j_f_a*e_mf1_a*pastvalue(1,t_f_a) - y[2]*(d_Am1_a*a_m1_a + d_Af1_a*a_f1_a)
+
+    yx[3] = r1_b*((1-alp)*y[2]*a_f1_b + bet*y[4]*a_f1_b)*(1-(((1-alp)*y[2] + bet*y[4])/K_b))- y[3]*(d_Em1_b*e_m_b + d_Ef1_b*e_f_b + m_Em_b*e_sm1_b + m_Ef_b*e_sf1_b)
+    yx[4] = j_m_b*e_mm1_b*pastvalue(3,t_m_b) + j_f_b*e_mf1_b*pastvalue(3,t_f_b) - y[4]*(d_Am1_b*a_m1_b + d_Af1_b*a_f1_b)
+
+    yx
+  }
+
+  #set the initial conditions 
+  y[1]=1
+  y[2]=1
+  y[3]=1
+  y[4]=1
+
+  #set the number of iterations (obs), integration step (h), buffer length (buflen) and start time (v)
+
+  obs=400000
+  buflen=3000
+  v=0.0
+  h=0.01
+
+  #arrays for the RK4 integrator (see below)
+
+  yt=array(1:nvar)
+  dyt=array(1:nvar)
+  dym=array(1:nvar)
+  yout=array(1:nvar)
+  yx=array(1:nvar)
+  eqn=array(1:nvar)
+
+  #these next two lines set up the history variables - it is necessary to carefully define what this history should be and ensure the state variable make sense
+
+  hisy=array(0,dim=c(buflen,nvar))
+  tmp=array(0,dim=c(buflen,nvar))
+  
+  #4th order runge-kutta function
+
+  rk4 <- function(dydx, y, t, n) {
+    for(jj in	1:n)
+      yt[jj]=y[jj]+dydx[jj]*h/2
+    dyt=derivs(t+h/2,yt)
+    for(jj in 1:n)	
+      yt[jj]=y[jj]+h/2*dyt[jj]
+    dym=derivs(t+h/2,yt)
+    for(jj in 1:n)
+      yt[jj]=y[jj]+h*dym[jj]
+    dym=dyt+dym
+    dyt=derivs(t+h,yt)
+    for(jj in 1:n)
+      yout[jj]=y[jj]+(h/6)*(dydx[jj]+dyt[jj]+2*dym[jj])
+    yout
+  }
+
+  # Define output arrays
+  t1 <- array(1:obs)
+  aM1 <- array(dim = c(obs, nvar))
+
+  # Initial state
+  y[1] <- 1
+  y[2] <- 1
+  y[3] <- 1
+  y[4] <- 1
+
+  # Initial convergence criterion threshold
+  convergence_threshold <- 1e-5
+
+  # Initialize previous state
+  previous_state <- y
+  final_state <- NULL
+
+  # Iterate the model
+  for (i in 1:obs) {
+    eqn <- derivs(v, y)
+    y <- rk4(eqn, y, v, nvar)
+
+    # Calculate the difference between the current state and the previous state
+    difference <- sum(abs(y - previous_state))
+
+    # Check if the system has reached equilibrium (the difference is below the threshold)
+    if (difference < convergence_threshold) {
+      # If the system has reached equilibrium, break out of the loop
+      final_state <- y
+      break
+    }
+
+    # Update the previous state
+    previous_state <- y
+
+    # Update the history buffer
+  for (ii in 1:buflen) {
+    for (jj in 1:nvar) {
+      tmp[ii, jj] <- hisy[ii, jj]
+    }
+  }
+
+  for (ii in 2:buflen) {
+    for (jj in 1:nvar) {
+      hisy[ii, jj] <- tmp[ii - 1, jj]
+    }
+  }
+
+  for (jj in 1:nvar) hisy[1, jj] <- y[jj]
+
+    v <- v + h
+    aM1[i, ] <- y
+    t1[i] <- v
+  }
+
+  if (!is.null(final_state)) {
+    # Create a data frame with the final values
+    final_values_temp <- data.frame(alp = alp, A1 = final_state[2], A2 = final_state[4])
+
+    # Append the final values to the final_values data frame
+    m_EmMalp2_final_values <- rbind(m_EmMalp2_final_values, final_values_temp)
+  }
+}
+
+# Output the final values
+m_EmMalp2_final_values
+
+# Save the final_values data frame as a CSV file
+file_path <- "/Users/tobythompson/Desktop/final_values/m_EmMalp2_final_values.csv"
+write.csv(m_EmMalp2_final_values, file = file_path, row.names = FALSE)
+
+```
+
+Female Maturation
+```{r}
+# Define the range of d_Am_a values
+alp_values <- seq(0.2, 0.5, by = 0.02)
+
+# Initialize an empty data frame to store final values
+m_EfMalp2_final_values <- data.frame(A1 = numeric(0), A2 = numeric(0))
+
+# Iterate over the range of d_Am_a values
+for (alp_value in alp_values) {
+  # Assign d_Am_a and calculate d_Am_b
+  alp <- alp_value
+  bet <- 1 - alp
+
+  pastvalue <- function(dyno, lag) {
+    tinc=0.01
+    bfl=3000
+
+    maxlag=(bfl-1)*tinc
+    p=0
+
+    if(lag>maxlag){
+      if(p==bfl) midpnt=1 else midpnt=p+1
+      past=hisy[midpnt,dyno]
+    } else {
+      dispnt=floor((lag/tinc)+0.5)
+      disp=(dispnt*tinc-lag)/tinc
+
+      A=0.5*disp*(disp-1)
+      B=(1-disp^2)
+      C=0.5*disp*(disp+1)
+
+      if (dispnt>p) midpnt=p+dispnt else midpnt=bfl+p-dispnt
+
+      if(midpnt==1) leftpnt=bfl else leftpnt=midpnt-1
+      if(midpnt==bfl) rightpnt=1 else rightpnt=midpnt+1
+
+      R=hisy[rightpnt,dyno]
+      L=hisy[leftpnt,dyno]
+      M=hisy[midpnt,dyno]
+
+      past=A*L+B*M+C*R
+    }
+
+    past 
+  }
+
+  nvar = 4
+
+
+  r_a = 6
+  K_a = 50
+d_Em_a = 0.5
+  d_Ef_a = 0.5
+  d_Af_a = 0.5
+d_Am_a = 0.5
+j_f_a = 0.5
+  j_m_a = 0.5
+  t_m_a = 0.1
+  t_f_a = 0.1
+
+  e_m_a = 0.5
+  e_f_a = 1 - e_m_a
+
+  a_c_a = 6
+
+  c_m_a = 0.7
+  c_f_a = 0
+  c_t_a = c_m_a + c_f_a
+
+  r1_a = (r_a*exp(-((1-d_Em_a)*e_m_a + (1-d_Ef_a)*e_f_a)))
+  d_Em1_a = d_Em_a*exp(-a_c_a*((alp*(c_m_a + c_f_a)) + (1 - bet)*(c_m_a + c_f_a)))
+  d_Ef1_a = d_Ef_a*exp(-a_c_a*((alp*(c_m_a + c_f_a)) + (1 - bet)*(c_m_a + c_f_a)))
+  d_Am1_a = 1 - ((1 - d_Am_a)*exp(-c_m_a))
+  d_Af1_a = 1- ((1-d_Af_a)*exp(-((1-d_Em_a)*e_m_a + (1-d_Ef_a)*e_f_a + c_f_a)))
+
+  m_Em_a = 0.5
+m_Ef_a = 0.2
+
+  e_sm1_a = e_m_a*(1-d_Em1_a)
+  e_sf1_a = e_f_a*(1-d_Ef1_a)
+
+  a_f1_a = e_f_a*(1-d_Ef1_a)*m_Ef_a*j_f_a
+  e_mf1_a = e_f_a*(1-d_Ef1_a)*m_Ef_a
+  a_m1_a = e_m_a*(1-d_Em1_a)*m_Em_a*j_m_a
+  e_mm1_a = e_m_a*(1-d_Em1_a)*m_Em_a
+
+  r_b = 6
+  K_b = 50
+d_Em_b = 0.5
+  d_Ef_b = 0.5
+  d_Af_b = 0.5
+d_Am_b = 0.5
+j_f_b = 0.5
+  j_m_b = 0.5
+  t_m_b = 0.1
+  t_f_b = 0.1
+
+  e_m_b = 0.5
+  e_f_b = 1 - e_m_b
+
+  a_c_b = 6
+
+  c_m_b = 0.7
+  c_f_b = 0
+  c_t_b = c_m_b + c_f_b
+
+  r1_b = (r_b*exp(-((1-d_Em_b)*e_m_b + (1-d_Ef_b)*e_f_b)))
+  d_Em1_b = d_Em_b*exp(-a_c_b*(((1-alp)*(c_m_b + c_f_b)) + bet*(c_m_b + c_f_b)))
+  d_Ef1_b = d_Ef_b*exp(-a_c_b*(((1-alp)*(c_m_b + c_f_b)) + bet*(c_m_b + c_f_b)))
+  d_Am1_b = 1 - ((1 - d_Am_b)*exp(-c_m_b))
+  d_Af1_b = 1- ((1-d_Af_b)*exp(-((1-d_Em_b)*e_m_b + (1-d_Ef_b)*e_f_b + c_f_b)))
+
+  m_Em_b = 0.5
+  m_Ef_b = 0.8
+  
+
+  e_sm1_b = e_m_b*(1-d_Em1_b)
+  e_sf1_b = e_f_b*(1-d_Ef1_b)
+
+  a_f1_b = e_f_b*(1-d_Ef1_b)*m_Ef_b*j_f_b
+  e_mf1_b = e_f_b*(1-d_Ef1_b)*m_Ef_b
+  a_m1_b = e_m_b*(1-d_Em1_b)*m_Em_b*j_m_b
+  e_mm1_b = e_m_b*(1-d_Em1_b)*m_Em_b
+
+  y=array(dim=(nvar))
+
+  derivs <- function(x, y) {
+    yx[1] = r1_a*(alp*y[2]*a_f1_a + (1-bet)*y[4]*a_f1_a)*(1-((alp*y[2] + (1-bet)*y[4])/K_a))- y[1]*(d_Em1_a*e_m_a + d_Ef1_a*e_f_a + m_Em_a*e_sm1_a + m_Ef_a*e_sf1_a)
+    yx[2] = j_m_a*e_mm1_a*pastvalue(1,t_m_a) + j_f_a*e_mf1_a*pastvalue(1,t_f_a) - y[2]*(d_Am1_a*a_m1_a + d_Af1_a*a_f1_a)
+
+    yx[3] = r1_b*((1-alp)*y[2]*a_f1_b + bet*y[4]*a_f1_b)*(1-(((1-alp)*y[2] + bet*y[4])/K_b))- y[3]*(d_Em1_b*e_m_b + d_Ef1_b*e_f_b + m_Em_b*e_sm1_b + m_Ef_b*e_sf1_b)
+    yx[4] = j_m_b*e_mm1_b*pastvalue(3,t_m_b) + j_f_b*e_mf1_b*pastvalue(3,t_f_b) - y[4]*(d_Am1_b*a_m1_b + d_Af1_b*a_f1_b)
+
+    yx
+  }
+
+  #set the initial conditions 
+  y[1]=1
+  y[2]=1
+  y[3]=1
+  y[4]=1
+
+  #set the number of iterations (obs), integration step (h), buffer length (buflen) and start time (v)
+
+  obs=400000
+  buflen=3000
+  v=0.0
+  h=0.01
+
+  #arrays for the RK4 integrator (see below)
+
+  yt=array(1:nvar)
+  dyt=array(1:nvar)
+  dym=array(1:nvar)
+  yout=array(1:nvar)
+  yx=array(1:nvar)
+  eqn=array(1:nvar)
+
+  #these next two lines set up the history variables - it is necessary to carefully define what this history should be and ensure the state variable make sense
+
+  hisy=array(0,dim=c(buflen,nvar))
+  tmp=array(0,dim=c(buflen,nvar))
+  
+  #4th order runge-kutta function
+
+  rk4 <- function(dydx, y, t, n) {
+    for(jj in	1:n)
+      yt[jj]=y[jj]+dydx[jj]*h/2
+    dyt=derivs(t+h/2,yt)
+    for(jj in 1:n)	
+      yt[jj]=y[jj]+h/2*dyt[jj]
+    dym=derivs(t+h/2,yt)
+    for(jj in 1:n)
+      yt[jj]=y[jj]+h*dym[jj]
+    dym=dyt+dym
+    dyt=derivs(t+h,yt)
+    for(jj in 1:n)
+      yout[jj]=y[jj]+(h/6)*(dydx[jj]+dyt[jj]+2*dym[jj])
+    yout
+  }
+
+  # Define output arrays
+  t1 <- array(1:obs)
+  aM1 <- array(dim = c(obs, nvar))
+
+  # Initial state
+  y[1] <- 1
+  y[2] <- 1
+  y[3] <- 1
+  y[4] <- 1
+
+  # Initial convergence criterion threshold
+  convergence_threshold <- 1e-5
+
+  # Initialize previous state
+  previous_state <- y
+  final_state <- NULL
+
+  # Iterate the model
+  for (i in 1:obs) {
+    eqn <- derivs(v, y)
+    y <- rk4(eqn, y, v, nvar)
+
+    # Calculate the difference between the current state and the previous state
+    difference <- sum(abs(y - previous_state))
+
+    # Check if the system has reached equilibrium (the difference is below the threshold)
+    if (difference < convergence_threshold) {
+      # If the system has reached equilibrium, break out of the loop
+      final_state <- y
+      break
+    }
+
+    # Update the previous state
+    previous_state <- y
+
+    # Update the history buffer
+  for (ii in 1:buflen) {
+    for (jj in 1:nvar) {
+      tmp[ii, jj] <- hisy[ii, jj]
+    }
+  }
+
+  for (ii in 2:buflen) {
+    for (jj in 1:nvar) {
+      hisy[ii, jj] <- tmp[ii - 1, jj]
+    }
+  }
+
+  for (jj in 1:nvar) hisy[1, jj] <- y[jj]
+
+    v <- v + h
+    aM1[i, ] <- y
+    t1[i] <- v
+  }
+
+  if (!is.null(final_state)) {
+    # Create a data frame with the final values
+    final_values_temp <- data.frame(alp = alp, A1 = final_state[2], A2 = final_state[4])
+
+    # Append the final values to the final_values data frame
+    m_EfMalp2_final_values <- rbind(m_EfMalp2_final_values, final_values_temp)
+  }
+}
+
+# Output the final values
+m_EfMalp2_final_values
+
+# Save the final_values data frame as a CSV file
+file_path <- "/Users/tobythompson/Desktop/final_values/m_EfMalp2_final_values.csv"
+write.csv(m_EfMalp2_final_values, file = file_path, row.names = FALSE)
+
+```
+
+
+Carrying Capacity
+```{r}
+# Define the range of d_Am_a values
+alp_values <- seq(0.2, 0.5, by = 0.02)
+
+# Initialize an empty data frame to store final values
+KMalp2_final_values <- data.frame(A1 = numeric(0), A2 = numeric(0))
+
+# Iterate over the range of d_Am_a values
+for (alp_value in alp_values) {
+  # Assign d_Am_a and calculate d_Am_b
+  alp <- alp_value
+  bet <- 1 - alp
+
+  pastvalue <- function(dyno, lag) {
+    tinc=0.01
+    bfl=3000
+
+    maxlag=(bfl-1)*tinc
+    p=0
+
+    if(lag>maxlag){
+      if(p==bfl) midpnt=1 else midpnt=p+1
+      past=hisy[midpnt,dyno]
+    } else {
+      dispnt=floor((lag/tinc)+0.5)
+      disp=(dispnt*tinc-lag)/tinc
+
+      A=0.5*disp*(disp-1)
+      B=(1-disp^2)
+      C=0.5*disp*(disp+1)
+
+      if (dispnt>p) midpnt=p+dispnt else midpnt=bfl+p-dispnt
+
+      if(midpnt==1) leftpnt=bfl else leftpnt=midpnt-1
+      if(midpnt==bfl) rightpnt=1 else rightpnt=midpnt+1
+
+      R=hisy[rightpnt,dyno]
+      L=hisy[leftpnt,dyno]
+      M=hisy[midpnt,dyno]
+
+      past=A*L+B*M+C*R
+    }
+
+    past 
+  }
+
+  nvar = 4
+
+  
+K_a = 20
+  r_a = 6
+
+d_Em_a = 0.5
+  d_Ef_a = 0.5
+  d_Af_a = 0.5
+d_Am_a = 0.5
+j_f_a = 0.5
+  j_m_a = 0.5
+  t_m_a = 0.1
+  t_f_a = 0.1
+
+  e_m_a = 0.5
+  e_f_a = 1 - e_m_a
+
+  a_c_a = 6
+
+  c_m_a = 0.7
+  c_f_a = 0
+  c_t_a = c_m_a + c_f_a
+
+  r1_a = (r_a*exp(-((1-d_Em_a)*e_m_a + (1-d_Ef_a)*e_f_a)))
+  d_Em1_a = d_Em_a*exp(-a_c_a*((alp*(c_m_a + c_f_a)) + (1 - bet)*(c_m_a + c_f_a)))
+  d_Ef1_a = d_Ef_a*exp(-a_c_a*((alp*(c_m_a + c_f_a)) + (1 - bet)*(c_m_a + c_f_a)))
+  d_Am1_a = 1 - ((1 - d_Am_a)*exp(-c_m_a))
+  d_Af1_a = 1- ((1-d_Af_a)*exp(-((1-d_Em_a)*e_m_a + (1-d_Ef_a)*e_f_a + c_f_a)))
+
+  m_Em_a = 0.5
+  m_Ef_a = 0.5
+
+  e_sm1_a = e_m_a*(1-d_Em1_a)
+  e_sf1_a = e_f_a*(1-d_Ef1_a)
+
+  a_f1_a = e_f_a*(1-d_Ef1_a)*m_Ef_a*j_f_a
+  e_mf1_a = e_f_a*(1-d_Ef1_a)*m_Ef_a
+  a_m1_a = e_m_a*(1-d_Em1_a)*m_Em_a*j_m_a
+  e_mm1_a = e_m_a*(1-d_Em1_a)*m_Em_a
+
+  r_b = 6
+  K_b = 80
+d_Em_b = 0.5
+  d_Ef_b = 0.5
+  d_Af_b = 0.5
+d_Am_b = 0.5
+j_f_b = 0.5
+  j_m_b = 0.5
+  t_m_b = 0.1
+  t_f_b = 0.1
+
+  e_m_b = 0.5
+  e_f_b = 1 - e_m_b
+
+  a_c_b = 6
+
+  c_m_b = 0.7
+  c_f_b = 0
+  c_t_b = c_m_b + c_f_b
+
+  r1_b = (r_b*exp(-((1-d_Em_b)*e_m_b + (1-d_Ef_b)*e_f_b)))
+  d_Em1_b = d_Em_b*exp(-a_c_b*(((1-alp)*(c_m_b + c_f_b)) + bet*(c_m_b + c_f_b)))
+  d_Ef1_b = d_Ef_b*exp(-a_c_b*(((1-alp)*(c_m_b + c_f_b)) + bet*(c_m_b + c_f_b)))
+  d_Am1_b = 1 - ((1 - d_Am_b)*exp(-c_m_b))
+  d_Af1_b = 1- ((1-d_Af_b)*exp(-((1-d_Em_b)*e_m_b + (1-d_Ef_b)*e_f_b + c_f_b)))
+
+  m_Em_b = 0.5
+  m_Ef_b = 0.5
+
+  e_sm1_b = e_m_b*(1-d_Em1_b)
+  e_sf1_b = e_f_b*(1-d_Ef1_b)
+
+  a_f1_b = e_f_b*(1-d_Ef1_b)*m_Ef_b*j_f_b
+  e_mf1_b = e_f_b*(1-d_Ef1_b)*m_Ef_b
+  a_m1_b = e_m_b*(1-d_Em1_b)*m_Em_b*j_m_b
+  e_mm1_b = e_m_b*(1-d_Em1_b)*m_Em_b
+
+  y=array(dim=(nvar))
+
+  derivs <- function(x, y) {
+    yx[1] = r1_a*(alp*y[2]*a_f1_a + (1-bet)*y[4]*a_f1_a)*(1-((alp*y[2] + (1-bet)*y[4])/K_a))- y[1]*(d_Em1_a*e_m_a + d_Ef1_a*e_f_a + m_Em_a*e_sm1_a + m_Ef_a*e_sf1_a)
+    yx[2] = j_m_a*e_mm1_a*pastvalue(1,t_m_a) + j_f_a*e_mf1_a*pastvalue(1,t_f_a) - y[2]*(d_Am1_a*a_m1_a + d_Af1_a*a_f1_a)
+
+    yx[3] = r1_b*((1-alp)*y[2]*a_f1_b + bet*y[4]*a_f1_b)*(1-(((1-alp)*y[2] + bet*y[4])/K_b))- y[3]*(d_Em1_b*e_m_b + d_Ef1_b*e_f_b + m_Em_b*e_sm1_b + m_Ef_b*e_sf1_b)
+    yx[4] = j_m_b*e_mm1_b*pastvalue(3,t_m_b) + j_f_b*e_mf1_b*pastvalue(3,t_f_b) - y[4]*(d_Am1_b*a_m1_b + d_Af1_b*a_f1_b)
+
+    yx
+  }
+
+  #set the initial conditions 
+  y[1]=1
+  y[2]=1
+  y[3]=1
+  y[4]=1
+
+  #set the number of iterations (obs), integration step (h), buffer length (buflen) and start time (v)
+
+  obs=400000
+  buflen=3000
+  v=0.0
+  h=0.01
+
+  #arrays for the RK4 integrator (see below)
+
+  yt=array(1:nvar)
+  dyt=array(1:nvar)
+  dym=array(1:nvar)
+  yout=array(1:nvar)
+  yx=array(1:nvar)
+  eqn=array(1:nvar)
+
+  #these next two lines set up the history variables - it is necessary to carefully define what this history should be and ensure the state variable make sense
+
+  hisy=array(0,dim=c(buflen,nvar))
+  tmp=array(0,dim=c(buflen,nvar))
+  
+  #4th order runge-kutta function
+
+  rk4 <- function(dydx, y, t, n) {
+    for(jj in	1:n)
+      yt[jj]=y[jj]+dydx[jj]*h/2
+    dyt=derivs(t+h/2,yt)
+    for(jj in 1:n)	
+      yt[jj]=y[jj]+h/2*dyt[jj]
+    dym=derivs(t+h/2,yt)
+    for(jj in 1:n)
+      yt[jj]=y[jj]+h*dym[jj]
+    dym=dyt+dym
+    dyt=derivs(t+h,yt)
+    for(jj in 1:n)
+      yout[jj]=y[jj]+(h/6)*(dydx[jj]+dyt[jj]+2*dym[jj])
+    yout
+  }
+
+  # Define output arrays
+  t1 <- array(1:obs)
+  aM1 <- array(dim = c(obs, nvar))
+
+  # Initial state
+  y[1] <- 1
+  y[2] <- 1
+  y[3] <- 1
+  y[4] <- 1
+
+  # Initial convergence criterion threshold
+  convergence_threshold <- 1e-5
+
+  # Initialize previous state
+  previous_state <- y
+  final_state <- NULL
+
+  # Iterate the model
+  for (i in 1:obs) {
+    eqn <- derivs(v, y)
+    y <- rk4(eqn, y, v, nvar)
+
+    # Calculate the difference between the current state and the previous state
+    difference <- sum(abs(y - previous_state))
+
+    # Check if the system has reached equilibrium (the difference is below the threshold)
+    if (difference < convergence_threshold) {
+      # If the system has reached equilibrium, break out of the loop
+      final_state <- y
+      break
+    }
+
+    # Update the previous state
+    previous_state <- y
+
+    # Update the history buffer
+  for (ii in 1:buflen) {
+    for (jj in 1:nvar) {
+      tmp[ii, jj] <- hisy[ii, jj]
+    }
+  }
+
+  for (ii in 2:buflen) {
+    for (jj in 1:nvar) {
+      hisy[ii, jj] <- tmp[ii - 1, jj]
+    }
+  }
+
+  for (jj in 1:nvar) hisy[1, jj] <- y[jj]
+
+    v <- v + h
+    aM1[i, ] <- y
+    t1[i] <- v
+  }
+
+  if (!is.null(final_state)) {
+    # Create a data frame with the final values
+    final_values_temp <- data.frame(alp = alp, A1 = final_state[2], A2 = final_state[4])
+
+    # Append the final values to the final_values data frame
+    KMalp2_final_values <- rbind(KMalp2_final_values, final_values_temp)
+  }
+}
+
+# Output the final values
+KMalp2_final_values
+
+# Save the final_values data frame as a CSV file
+file_path <- "/Users/tobythompson/Desktop/final_values/KMalp2_final_values.csv"
+write.csv(KMalp2_final_values, file = file_path, row.names = FALSE)
+
+```
